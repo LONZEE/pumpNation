@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Nation | Elevate Your Performance</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Defining the custom bright pink from your logo/UI
+                        'pump-pink': '#F50057', 
+                        // Defining dark background shades
+                        'pump-dark': '#121212',
+                        'pump-card': '#1E1E1E',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .smooth-scroll { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-pump-dark text-gray-200 smooth-scroll">
+
+    <nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur-sm border-b border-zinc-800 py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            
+            <a href="#" class="flex items-center">
+                <img src="logo.png" alt="Pump Nation Logo" class="h-12 w-auto">
+            </a>
+
+            <div class="hidden md:flex space-x-8 font-semibold text-sm tracking-wide text-gray-300">
+                <a href="#" class="hover:text-pump-pink transition">THE GYM</a>
+                <a href="#" class="hover:text-pump-pink transition">PROGRAMS</a>
+                <a href="#" class="hover:text-pump-pink transition">TRAINERS</a>
+                <a href="#app-download" class="hover:text-pump-pink transition">APP</a>
+            </div>
+
+            <div class="hidden md:block">
+                <a href="https://goteamup.com/p/8192143-pump/memberships/201335/" target="_blank" class="bg-pump-pink text-white px-6 py-3 text-sm font-bold uppercase tracking-wider hover:bg-pink-700 transition duration-300 rounded-sm">
+                    Get Free Pass
+                </a>
+            </div>
+
+            <div class="md:hidden text-2xl text-gray-300">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <header class="relative h-screen flex items-center justify-center">
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
+            <div class="absolute inset-0 bg-black/70"></div>
+        </div>
+
+        <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter mb-6 leading-tight">
+                Build Strength.<br>Ignite Passion.
+            </h1>
+            <p class="text-gray-300 text-lg md:text-xl mb-10 font-light max-w-2xl mx-auto">
+                Pump Nation is your destination for elite fitness, expert coaching, and a community that drives results.
+            </p>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <a href="https://goteamup.com/p/8192143-pump/memberships/201335/" target="_blank" class="bg-pump-pink text-white px-8 py-4 font-bold uppercase tracking-wider hover:bg-pink-700 transition rounded-sm">
+                    Join The Nation
+                </a>
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule" target="_blank" class="border-2 border-white text-white px-8 py-4 font-bold uppercase tracking-wider hover:bg-pump-pink hover:border-pump-pink transition rounded-sm">
+                    View Class Schedule
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section class="py-24 bg-pump-dark">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold uppercase tracking-wide mb-3 text-white">Our Approach</h2>
+                <div class="w-16 h-1 bg-pump-pink mx-auto"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+                <div class="group p-6 bg-pump-card/50 hover:bg-pump-card transition duration-300 rounded-xl border border-zinc-800 hover:border-zinc-700">
+                    <div class="text-4xl text-pump-pink mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-dumbbell"></i>
+                    </div>
+                    <h3 class="text-xl font-bold uppercase mb-4 text-white">Ignite</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        State-of-the-art equipment and an electric atmosphere designed to get you started and keep you moving.
+                    </p>
+                </div>
+                <div class="group p-6 bg-pump-card/50 hover:bg-pump-card transition duration-300 rounded-xl border border-zinc-800 hover:border-zinc-700">
+                    <div class="text-4xl text-pump-pink mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                    <h3 class="text-xl font-bold uppercase mb-4 text-white">Perform</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Expert personal training, functional fitness zones, and classes that push your physical limits.
+                    </p>
+                </div>
+                <div class="group p-6 bg-pump-card/50 hover:bg-pump-card transition duration-300 rounded-xl border border-zinc-800 hover:border-zinc-700">
+                    <div class="text-4xl text-pump-pink mb-6 group-hover:scale-110 transition duration-300">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h3 class="text-xl font-bold uppercase mb-4 text-white">Recover</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Nutrition coaching, sauna access, and recovery zones to ensure you stay consistent and injury-free.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="flex flex-col md:flex-row h-auto md:h-[600px]">
+        <div class="w-full md:w-1/2 flex items-center justify-center p-12 bg-pump-card order-2 md:order-1">
+            <div class="max-w-md">
+                <span class="text-pump-pink font-bold uppercase text-sm tracking-widest mb-2 block">The Facility</span>
+                <h2 class="text-3xl md:text-4xl font-black uppercase mb-6 leading-none text-white">Unlimited<br>Access</h2>
+                <p class="text-gray-400 mb-8 leading-relaxed">
+                    Stop waiting for equipment. Our spacious floor plan ensures you have access to squat racks, cardio labs, and functional turf areas exactly when you need them.
+                </p>
+                <a href="https://goteamup.com/p/8192143-pump/memberships/201335/" target="_blank" class="text-white font-bold border-b-2 border-pump-pink hover:text-pump-pink transition pb-1 uppercase tracking-wide">
+                    View Membership Options
+                </a>
+            </div>
+        </div>
+        <div class="w-full md:w-1/2 h-96 md:h-auto bg-[url('https://images.unsplash.com/photo-1517963879466-8025e824e496?q=80&w=2069')] bg-cover bg-center order-1 md:order-2"></div>
+    </section>
+
+    <section class="flex flex-col md:flex-row h-auto md:h-[600px]">
+        <div class="w-full md:w-1/2 h-96 md:h-auto bg-[url('https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070')] bg-cover bg-center"></div>
+        <div class="w-full md:w-1/2 flex items-center justify-center p-12 bg-pump-dark text-white">
+            <div class="max-w-md">
+                <span class="text-pump-pink font-bold uppercase text-sm tracking-widest mb-2 block">Specialized Coaching</span>
+                <h2 class="text-3xl md:text-4xl font-black uppercase mb-6 leading-none">Personalized<br>Performance</h2>
+                <p class="text-gray-400 mb-8 leading-relaxed">
+                    Generic plans yield generic results. Work 1-on-1 with a coach to analyze your mechanics, improve your strength, and break through plateaus.
+                </p>
+                 <a href="#" class="text-white font-bold border-b-2 border-pump-pink hover:text-pump-pink transition pb-1 uppercase tracking-wide">
+                    Meet Our Trainers
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="app-download" class="py-20 bg-pump-card">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-black uppercase mb-4 text-white">Track Your Progress</h2>
+                <p class="text-gray-400 mb-8 leading-relaxed">
+                    Download the official Pump Nation App. Access <strong>custom meal plans</strong>, track your check-ins, and compete in gym-wide challenges right from your phone.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="https://apps.apple.com/us/app/pump-nation/id6751434591" target="_blank" class="bg-zinc-900 border border-zinc-800 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-3 hover:border-pump-pink hover:text-pump-pink hover:-translate-y-1 transition-all shadow-lg">
+                        <i class="fa-brands fa-apple text-2xl"></i> 
+                        <div class="text-left">
+                            <div class="text-[10px] uppercase leading-none">Download on the</div>
+                            <div class="font-bold text-lg leading-none">App Store</div>
+                        </div>
+                    </a>
+                    
+                    <a href="#" class="bg-zinc-900 border border-zinc-800 text-white px-6 py-3 rounded-lg flex items-center justify-center gap-3 hover:border-pump-pink hover:text-pump-pink hover:-translate-y-1 transition-all shadow-lg opacity-80">
+                        <i class="fa-brands fa-google-play text-xl"></i> 
+                        <div class="text-left">
+                            <div class="text-[10px] uppercase leading-none">Get it on</div>
+                            <div class="font-bold text-lg leading-none">Google Play</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="w-full md:w-1/2 flex justify-center">
+                <div class="w-72 h-[550px] bg-black rounded-[3rem] border-[8px] border-zinc-800 shadow-2xl flex items-center justify-center overflow-hidden relative">
+                    <div class="absolute top-0 w-32 h-6 bg-zinc-800 rounded-b-xl z-10"></div>
+                    
+                    <img src="app_preview.png" alt="Pump Nation Meal Planner Interface" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 bg-pump-pink text-center text-white">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-black uppercase italic mb-6">Start Your Journey Today</h2>
+            <p class="text-xl mb-10 max-w-2xl mx-auto opacity-90">
+                Stop masking your potential with excuses. Experience the Pump Nation difference.
+            </p>
+            <a href="https://goteamup.com/p/8192143-pump/memberships/201335/" target="_blank" class="bg-white text-pump-pink px-10 py-4 font-bold uppercase tracking-wider hover:bg-zinc-900 hover:text-white transition duration-300 rounded-sm">
+                Claim 3-Day Trial
+            </a>
+        </div>
+    </section>
+
+    <footer class="bg-black text-gray-400 py-16 border-t border-zinc-800">
+        <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+                 <a href="#" class="inline-block mb-6">
+                    <img src="logo.png" alt="Pump Nation Logo" class="h-10 w-auto grayscale brightness-200 hover:grayscale-0 transition">
+                </a>
+                <p class="text-sm">
+                    © 2025 Pump Nation.<br>All rights reserved.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase mb-6">Company</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="#" class="hover:text-pump-pink transition">About Us</a></li>
+                    <li><a href="#" class="hover:text-pump-pink transition">Careers</a></li>
+                    <li><a href="#" class="hover:text-pump-pink transition">Privacy Policy</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase mb-6">Services</h4>
+                <ul class="space-y-3 text-sm">
+                    <li><a href="#" class="hover:text-pump-pink transition">Personal Training</a></li>
+                    <li><a href="#" class="hover:text-pump-pink transition">Group Classes</a></li>
+                    <li><a href="#" class="hover:text-pump-pink transition">Nutrition</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-white font-bold uppercase mb-6">Contact</h4>
+                <ul class="space-y-3 text-sm">
+                    <li>123 Fitness Blvd<br>McAllen, TX 78504</li>
+                    <li class="mt-4"><a href="tel:+19565550123" class="hover:text-pump-pink transition">(956) 555-0123</a></li>
+                    <li><a href="mailto:info@pumpnation.com" class="hover:text-pump-pink transition">info@pumpnation.com</a></li>
+                    <li class="flex gap-4 mt-6 text-xl">
+                        <a href="#" class="hover:text-pump-pink transition"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="hover:text-pump-pink transition"><i class="fa-brands fa-facebook"></i></a>
+                        <a href="#" class="hover:text-pump-pink transition"><i class="fa-brands fa-tiktok"></i></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
