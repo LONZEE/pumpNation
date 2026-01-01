@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pump Nation | Member Login</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+
+<body class="bg-black text-white flex items-center justify-center h-screen">
+
+<div class="text-center max-w-md">
+  <h1 class="text-4xl font-black uppercase mb-4">Members Only</h1>
+  <p class="text-gray-400 mb-8">
+    Log in to access weekly workouts and downloads.
+  </p>
+
+  <button onclick="netlifyIdentity.open()"
+    class="bg-red-600 px-10 py-4 font-bold uppercase tracking-wide hover:bg-red-700 transition">
+    Log In
+  </button>
+</div>
+
+<script>
+  netlifyIdentity.on("login", () => {
+    window.location.href = "/workouts/";
+  });
+</script>
+
+</body>
+</html>

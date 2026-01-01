@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Nation | Workouts of the Week</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pump-red': '#D00000',
+                        'pump-dark': '#121212',
+                        'pump-card': '#1E1E1E'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-pump-dark text-gray-200">
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        window.location.replace("/login.html");
+      }
+    });
+  }
+</script>
+
+
+<!-- NAV -->
+<nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+        <a href="/">
+            <img src="/logo.png" class="h-10" alt="Pump Nation">
+        </a>
+
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300">
+            <a href="/">HOME</a>
+<a href="/trainers.html">TRAINERS</a>
+<a href="/workouts/" class="text-pump-red">WORKOUTS</a>
+
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<header class="pt-32 pb-20 text-center">
+    <h1 class="text-4xl md:text-6xl font-black uppercase italic text-white mb-4">
+        Workouts of the Week
+    </h1>
+    <p class="text-gray-400 max-w-xl mx-auto">
+        Updated weekly. Train with purpose. No guesswork.
+    </p>
+</header>
+
+<!-- WORKOUTS -->
+<section class="py-16">
+    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+
+        <!-- DAY CARD -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
+            <h3 class="text-xl font-bold uppercase text-white mb-2">Monday</h3>
+            <p class="text-pump-red text-sm font-semibold mb-4">Strength + Conditioning</p>
+
+            <ul class="text-gray-300 text-sm space-y-2">
+                <li>• Back Squat — 5x5</li>
+                <li>• Bulgarian Split Squats — 3x10</li>
+                <li>• Walking Lunges — 3x20</li>
+                <li>• Assault Bike — 6 rounds (30s / 90s)</li>
+            </ul>
+        </div>
+
+        <!-- DAY CARD -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
+            <h3 class="text-xl font-bold uppercase text-white mb-2">Tuesday</h3>
+            <p class="text-pump-red text-sm font-semibold mb-4">Upper Body</p>
+
+            <ul class="text-gray-300 text-sm space-y-2">
+                <li>• Bench Press — 5x5</li>
+                <li>• Bent Over Rows — 4x8</li>
+                <li>• Push-ups — 3x max</li>
+                <li>• Core Circuit — 10 min</li>
+            </ul>
+        </div>
+
+        <!-- DAY CARD -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
+            <h3 class="text-xl font-bold uppercase text-white mb-2">Wednesday</h3>
+            <p class="text-pump-red text-sm font-semibold mb-4">HYROX Style</p>
+
+            <ul class="text-gray-300 text-sm space-y-2">
+                <li>• Sled Push — 6 rounds</li>
+                <li>• Wall Balls — 100 reps</li>
+                <li>• Farmer Carry — 200m</li>
+                <li>• Row — 1000m</li>
+            </ul>
+        </div>
+
+        <!-- Add Thu / Fri / Sat as needed -->
+
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 text-center bg-pump-red text-white">
+    <h2 class="text-3xl font-black uppercase mb-4">Want Coaching With This?</h2>
+    <p class="mb-8 opacity-90">
+        Follow the plan or train with a coach to dial it in.
+    </p>
+    <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
+       target="_blank"
+       class="bg-white text-pump-red px-8 py-4 font-bold uppercase tracking-wide hover:bg-black hover:text-white transition">
+        Join Pump Nation
+    </a>
+</section>
+
+</body>
+</html>
