@@ -42,8 +42,9 @@
 
             <div class="hidden md:flex space-x-8 font-semibold text-sm tracking-wide text-gray-300">
                 <a href="#" class="hover:text-pump-pink transition">THE GYM</a>
-                <a href="#" class="hover:text-pump-pink transition">PROGRAMS</a>
-                <a href="#" class="hover:text-pump-pink transition">TRAINERS</a>
+                <!-- <a href="#" class="hover:text-pump-pink transition">PROGRAMS</a> -->
+                <a href="trainers.html" class="hover:text-pump-pink transition">TRAINERS</a>
+
                 <a href="#app-download" class="hover:text-pump-pink transition">APP</a>
             </div>
 
@@ -53,9 +54,25 @@
                 </a>
             </div>
 
-            <div class="md:hidden text-2xl text-gray-300">
-                <i class="fa-solid fa-bars"></i>
-            </div>
+            <div class="md:hidden relative">
+    <button id="mobileMenuBtn" class="text-2xl text-gray-300 focus:outline-none">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu"
+         class="hidden absolute right-0 mt-4 w-48 bg-pump-card border border-zinc-800 rounded-lg shadow-xl text-sm font-semibold text-gray-300 z-50">
+        <a href="index.html" class="block px-4 py-3 hover:text-pump-pink transition">HOME</a>
+        <a href="trainers.html" class="block px-4 py-3 hover:text-pump-pink transition">TRAINERS</a>
+        <a href="#app-download" class="block px-4 py-3 hover:text-pump-pink transition">APP</a>
+        <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
+           target="_blank"
+           class="block px-4 py-3 text-pump-pink font-bold">
+            FREE PASS
+        </a>
+    </div>
+</div>
+
         </div>
     </nav>
 <header class="relative h-screen flex items-center justify-center overflow-hidden">
@@ -244,14 +261,14 @@
                 </p>
             </div>
 
-            <div>
+            <!-- <div>
                 <h4 class="text-white font-bold uppercase mb-6">Company</h4>
                 <ul class="space-y-3 text-sm">
                     <li><a href="#" class="hover:text-pump-pink transition">About Us</a></li>
                     <li><a href="#" class="hover:text-pump-pink transition">Careers</a></li>
                     <li><a href="#" class="hover:text-pump-pink transition">Privacy Policy</a></li>
                 </ul>
-            </div>
+            </div> -->
 
             <div>
                 <h4 class="text-white font-bold uppercase mb-6">Services</h4>
@@ -267,7 +284,7 @@
                 <ul class="space-y-3 text-sm">
                     <li>413 Ruben Torres Suite 6<br>Brownsville, TX 78520</li>
                     <li class="mt-4"><a href="tel:+19565550123" class="hover:text-pump-pink transition">(956) 555-0123</a></li>
-                    <li><a href="mailto:info@pumpnation.com" class="hover:text-pump-pink transition">info@pumpnation.com</a></li>
+                    <li><a href="" class="hover:text-pump-pink transition">TBD</a></li>
                     <li class="flex gap-4 mt-6 text-xl">
                         <a href="#" class="hover:text-pump-pink transition"><i class="fa-brands fa-instagram"></i></a>
                         <a href="#" class="hover:text-pump-pink transition"><i class="fa-brands fa-facebook"></i></a>
@@ -277,6 +294,21 @@
             </div>
         </div>
     </footer>
+<script>
+    const menuBtn = document.getElementById("mobileMenuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    menuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+    });
+
+    // Optional: close menu when clicking a link
+    document.querySelectorAll("#mobileMenu a").forEach(link => {
+        link.addEventListener("click", () => {
+            mobileMenu.classList.add("hidden");
+        });
+    });
+</script>
 
 </body>
 </html>

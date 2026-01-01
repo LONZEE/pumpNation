@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pump Nation | Meet the Trainers</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pump-pink': '#F50057',
+                        'pump-dark': '#121212',
+                        'pump-card': '#1E1E1E'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-pump-dark text-gray-200">
+
+<nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+
+        <a href="index.html">
+            <img src="logo.png" alt="Pump Nation Logo" class="h-10">
+        </a>
+
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300">
+            <a href="index.html" class="hover:text-pump-pink">HOME</a>
+            <a href="trainers.html" class="text-pump-pink">TRAINERS</a>
+            <a href="#app-download" class="hover:text-pump-pink">APP</a>
+        </div>
+
+        <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
+           target="_blank"
+           class="hidden md:block bg-pump-pink text-white px-6 py-3 text-sm font-bold uppercase tracking-wider hover:bg-pink-700 transition rounded-sm">
+            Free Pass
+        </a>
+
+        <!-- Mobile Menu -->
+        <div class="md:hidden relative">
+            <button id="mobileMenuBtn" class="text-2xl text-gray-300 focus:outline-none">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div id="mobileMenu"
+                 class="hidden absolute right-0 mt-4 w-48 bg-pump-card border border-zinc-800 rounded-lg shadow-xl text-sm font-semibold text-gray-300 z-50">
+                <a href="index.html" class="block px-4 py-3 hover:text-pump-pink transition">HOME</a>
+                <a href="trainers.html" class="block px-4 py-3 hover:text-pump-pink transition">TRAINERS</a>
+                <a href="#app-download" class="block px-4 py-3 hover:text-pump-pink transition">APP</a>
+                <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
+                   target="_blank"
+                   class="block px-4 py-3 text-pump-pink font-bold">
+                    FREE PASS
+                </a>
+            </div>
+        </div>
+
+    </div>
+</nav>
+
+
+<!-- HERO -->
+<header class="pt-32 pb-24 text-center bg-gradient-to-b from-black to-pump-dark">
+    <h1 class="text-4xl md:text-6xl font-black uppercase italic text-white mb-6">
+        Meet the Coaches
+    </h1>
+    <p class="max-w-2xl mx-auto text-gray-400 text-lg">
+        Our trainers don’t guess. They coach with intent, experience, and proven systems designed to get results.
+    </p>
+</header>
+
+<!-- OWNERS -->
+<section class="py-24">
+    <div class="container mx-auto px-6">
+
+        <div class="text-center mb-16">
+            <h2 class="text-3xl font-bold uppercase tracking-wide text-white mb-3">
+                Owners
+            </h2>
+            <div class="w-16 h-1 bg-pump-pink mx-auto"></div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-12">
+
+            <!-- Owner Card -->
+            <div class="bg-pump-card max-w-sm w-full border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+                <img src="Trainers/Ricky.jpg"
+                     alt="Ricardo Martinez"
+                     class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+                <div class="p-6 text-center">
+                    <h3 class="text-xl font-bold text-white uppercase">
+                        Ricardo Martinez
+                    </h3>
+                    <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">
+                        Owner
+                    </p>
+
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+    Specializes in high-performance strength and conditioning with a strong focus on
+    HYROX-style training. Ricky builds athletes who are powerful, conditioned, and prepared
+    to perform under fatigue.
+</p>
+            
+
+                    <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                       target="_blank"
+                       class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                        Train With Ricardo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Owner Card -->
+            <div class="bg-pump-card max-w-sm w-full border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+                <img src="Trainers/Edgar.jpg"
+                     alt="Edgar Lopez"
+                     class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+                <div class="p-6 text-center">
+                    <h3 class="text-xl font-bold text-white uppercase">
+                        Edgar Lopez
+                    </h3>
+                    <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">
+                        Owner
+                    </p>
+
+                    <p class="text-gray-400 text-sm leading-relaxed mb-6">
+    Specializes in extreme weight loss and full-body sculpting. Edgar is known for helping
+    clients transform their physiques through structured programming, accountability,
+    and disciplined execution.
+</p>
+
+
+                    <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                       target="_blank"
+                       class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                        Train With Edgar
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<div class="text-center mb-16">
+            <h2 class="text-3xl font-bold uppercase tracking-wide text-white mb-3">
+                Trainers
+            </h2>
+            <div class="w-16 h-1 bg-pump-pink mx-auto"></div>
+        </div>
+<!-- TRAINERS GRID -->
+<section class="py-24">
+    <div class="container mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+        
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Nick.jpg" alt="Nick Garza"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Nick Garza</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Strength & Conditioning</p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Specializes in Olympic lifting techniques while also working extensively with rehab
+    and movement restoration. Nick helps clients lift efficiently, safely, and with purpose.
+</p>
+
+
+                <!-- <ul class="text-sm text-gray-400 mb-6 space-y-1">
+                    <li>✔ CSCS Certified</li>
+                    <li>✔ 10+ Years Coaching</li>
+                    <li>✔ Powerlifting Focus</li>
+                </ul> -->
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Erick.jpg" alt="Erick Perez"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Erick Perez</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Competitive Powerlifting / Strength Training </p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Competitive Powerlifting with multiple wins under his belt. Erick brings elite-level
+    experience to every session, focusing on technique, strength progression,
+    and competitive performance.
+</p>
+
+
+                <!-- <ul class="text-sm text-gray-400 mb-6 space-y-1">
+                    <li>✔ NASM CPT</li>
+                    <li>✔ Nutrition Coaching</li>
+                    <li>✔ HIIT & Hybrid</li>
+                </ul> -->
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Brenda.jpg" alt="Brenda Herebia"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Brenda Herebia</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Body Sculpting / Women’s Fitness </p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Specializes in women’s fitness with a focus on weight loss, body sculpting,
+    and targeted glute-focused workouts. Brenda helps clients feel confident,
+    strong, and empowered.
+</p>
+
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- TRAINERS GRID -->
+<section class="py-24">
+    <div class="container mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Mario.jpg" alt="Mario Chavez"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Mario Chavez</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Silver Sneakers / Cross-Training</p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Specializes in Silver Sneakers and cross-training programs designed to help clients
+    lose weight, improve mobility, and build functional strength at any age.
+</p>
+
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Josegil.jpg" alt="Jose Gilerto"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Jose Gilerto</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Hybrid / Fat Loss / Group Training</p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Expert in group training environments, known for structuring workouts
+    and pushing clients beyond comfort zones. Jose creates intensity,
+    accountability, and measurable results.
+</p>
+
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+        <!-- Trainer Card -->
+        <div class="bg-pump-card border border-zinc-800 rounded-xl overflow-hidden hover:border-pump-pink transition">
+            <img src="Trainers/Sandra.jpg" alt="Sandra Flores"
+                 class="w-full h-80 object-cover grayscale hover:grayscale-0 transition duration-500">
+
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white uppercase">Sandra FLores</h3>
+                <p class="text-pump-pink text-sm uppercase tracking-wider mb-3">Mobility & Rehab</p>
+
+                <p class="text-gray-400 text-sm leading-relaxed mb-4">
+    Known for precision and structure, Sandra programs workouts by the book.
+    She specializes in proper periodization and phased training plans
+    to ensure consistent progress and long-term success.
+</p>
+
+
+                <a href="https://goteamup.com/p/8192143-pump/c/schedule"
+                   target="_blank"
+                   class="inline-block w-full text-center border border-pump-pink text-white py-3 font-bold uppercase tracking-wide hover:bg-pump-pink transition">
+                    Book Session
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+<!-- CTA -->
+<section class="py-24 bg-pump-pink text-center text-white">
+    <h2 class="text-4xl font-black uppercase italic mb-6">
+        Train With Purpose
+    </h2>
+    <p class="text-lg max-w-xl mx-auto mb-10 opacity-90">
+        Stop guessing. Get coached by professionals who care about results.
+    </p>
+    <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
+       target="_blank"
+       class="bg-white text-pump-pink px-10 py-4 font-bold uppercase tracking-wider hover:bg-zinc-900 hover:text-white transition rounded-sm">
+        Start Today
+    </a>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-black text-gray-400 py-12 border-t border-zinc-800 text-center">
+    <p class="text-sm">© 2025 Pump Nation. All rights reserved.</p>
+</footer>
+<script>
+    const menuBtn = document.getElementById("mobileMenuBtn");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener("click", () => {
+            mobileMenu.classList.toggle("hidden");
+        });
+
+        document.querySelectorAll("#mobileMenu a").forEach(link => {
+            link.addEventListener("click", () => {
+                mobileMenu.classList.add("hidden");
+            });
+        });
+    }
+</script>
+
+</body>
+</html>
