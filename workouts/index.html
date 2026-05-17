@@ -79,14 +79,54 @@
 <nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
     <div class="container mx-auto px-6 flex justify-between items-center">
         <a href="/"><img src="/logo.png" class="h-10" alt="Pump Nation"></a>
+
+        <!-- Desktop links -->
         <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300 items-center">
-            <a href="/">HOME</a>
-            <a href="/trainers.html">TRAINERS</a>
+            <a href="/" class="hover:text-pump-red transition">HOME</a>
+            <a href="/trainers.html" class="hover:text-pump-red transition">TRAINERS</a>
             <a href="/workouts/" class="text-pump-red">WORKOUTS</a>
             <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
         </div>
+
+        <!-- Mobile hamburger -->
+        <div class="md:hidden relative">
+            <button id="mobileMenuBtn" class="text-2xl text-gray-300 focus:outline-none" aria-label="Open menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div id="mobileMenu"
+                 class="hidden absolute right-0 mt-4 w-48 bg-pump-card border border-zinc-800 rounded-lg shadow-xl text-sm font-semibold text-gray-300 z-50">
+                <a href="/" class="block px-4 py-3 hover:text-pump-red transition">HOME</a>
+                <a href="/trainers.html" class="block px-4 py-3 hover:text-pump-red transition">TRAINERS</a>
+                <a href="/workouts/" class="block px-4 py-3 text-pump-red">WORKOUTS</a>
+                <div class="border-t border-zinc-800"></div>
+                <button onclick="netlifyIdentity.logout()" class="block w-full text-left px-4 py-3 hover:text-pump-red transition">
+                    LOG OUT
+                </button>
+            </div>
+        </div>
     </div>
 </nav>
+
+<script>
+    // Hamburger toggle (runs as soon as nav exists in DOM)
+    (function () {
+        var btn = document.getElementById("mobileMenuBtn");
+        var menu = document.getElementById("mobileMenu");
+        if (!btn || !menu) return;
+        btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            menu.classList.toggle("hidden");
+        });
+        // Close when clicking a link or outside
+        menu.querySelectorAll("a, button").forEach(function (el) {
+            el.addEventListener("click", function () { menu.classList.add("hidden"); });
+        });
+        document.addEventListener("click", function (e) {
+            if (!menu.contains(e.target) && e.target !== btn) menu.classList.add("hidden");
+        });
+    })();
+</script>
 
 
 <!-- HERO -->
@@ -122,6 +162,66 @@
         <p class="text-gray-500 text-xs mt-4">
             If you just signed up, your coach hasn't added you to the program sheet yet. Reach out and we'll get you set up.
         </p>
+    </div>
+</section>
+
+
+<!-- PROGRESS / METRICS -->
+<section id="progress-section" class="hidden pb-12 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <h2 class="text-2xl md:text-3xl font-black uppercase italic text-white mb-6">
+            <i class="fa-solid fa-chart-line text-pump-red mr-2"></i> Your Progress
+        </h2>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+            <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Total Sessions</p>
+                <p id="stat-sessions" class="text-3xl font-black text-white">0</p>
+            </div>
+            <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">This Week</p>
+                <p id="stat-week" class="text-3xl font-black text-white">0</p>
+            </div>
+            <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Total Volume</p>
+                <p id="stat-volume" class="text-3xl font-black text-white">0</p>
+                <p class="text-[10px] text-gray-500 mt-1">lb · reps × weight</p>
+            </div>
+            <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+                <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Weekly Streak</p>
+                <p id="stat-streak" class="text-3xl font-black text-white">0</p>
+                <p class="text-[10px] text-gray-500 mt-1">consecutive weeks</p>
+            </div>
+        </div>
+
+        <!-- Chart + PRs -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Progression chart -->
+            <div class="md:col-span-2 bg-pump-card border border-zinc-800 rounded-xl p-5">
+                <div class="flex items-baseline justify-between mb-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-white">Weight Over Time</h3>
+                    <select id="chart-exercise" class="bg-pump-dark border border-zinc-700 rounded text-xs text-gray-300 px-2 py-1"></select>
+                </div>
+                <div id="chart-container" class="h-48 relative">
+                    <svg id="progress-chart" class="w-full h-full" viewBox="0 0 600 200" preserveAspectRatio="none"></svg>
+                </div>
+                <p id="chart-empty" class="hidden text-center text-gray-500 text-xs italic mt-4">
+                    Log a few sets across multiple days to see your progression here.
+                </p>
+            </div>
+
+            <!-- Personal records -->
+            <div class="bg-pump-card border border-zinc-800 rounded-xl p-5">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-white mb-3">
+                    <i class="fa-solid fa-trophy text-yellow-500 mr-1"></i> Personal Records
+                </h3>
+                <ul id="pr-list" class="text-sm space-y-2"></ul>
+                <p id="pr-empty" class="hidden text-gray-500 text-xs italic">
+                    Save some workouts with weight values to start tracking PRs.
+                </p>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -204,6 +304,7 @@ async function bootApp(user) {
     const daysInProgram = uniqueDays();
     ACTIVE_DAY = daysInProgram.includes(today) ? today : daysInProgram[0];
     renderDay(ACTIVE_DAY);
+    renderProgress();
     renderHistory();
     document.getElementById("loading-state").classList.add("hidden");
 }
@@ -341,6 +442,7 @@ async function onSave(e) {
         const refreshed = await fetch(APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((CURRENT_USER.email||"").toLowerCase()));
         const refData = await refreshed.json();
         HISTORY = refData.history || [];
+        renderProgress();
         renderHistory();
     } catch (err) {
         alert("Couldn't save: " + err.message);
@@ -349,6 +451,206 @@ async function onSave(e) {
         submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Workout';
     }
 }
+
+// ── PROGRESS / METRICS ────────────────────────────────────────────────────
+function renderProgress() {
+    const section = document.getElementById("progress-section");
+    if (!HISTORY.length) {
+        section.classList.add("hidden");
+        return;
+    }
+    section.classList.remove("hidden");
+
+    // Normalise rows: numeric reps/weight, parsed Date as ISO yyyy-mm-dd
+    const rows = HISTORY.map(r => ({
+        date: parseDateISO(r.Date) || parseDateISO(r.Timestamp),
+        exercise: String(r.Exercise || "").trim(),
+        reps: parseFloat(r.Reps) || 0,
+        weight: parseFloat(String(r.Weight).replace(/[^\d.]/g, "")) || 0,
+        day: r.Day || ""
+    })).filter(r => r.date);
+
+    // ─ Stat 1: total distinct sessions (one per unique date)
+    const sessionDates = new Set(rows.map(r => r.date));
+    document.getElementById("stat-sessions").textContent = sessionDates.size;
+
+    // ─ Stat 2: sessions this calendar week (Mon–Sun)
+    const weekStart = startOfWeek(new Date());
+    const thisWeek = new Set([...sessionDates].filter(d => new Date(d) >= weekStart));
+    document.getElementById("stat-week").textContent = thisWeek.size;
+
+    // ─ Stat 3: total volume
+    const totalVol = rows.reduce((sum, r) => sum + r.reps * r.weight, 0);
+    document.getElementById("stat-volume").textContent = formatNumber(Math.round(totalVol));
+
+    // ─ Stat 4: weekly streak (consecutive ISO weeks with at least one session)
+    document.getElementById("stat-streak").textContent = computeWeeklyStreak(sessionDates);
+
+    // ─ PRs: highest weight per exercise
+    const prs = {};
+    rows.forEach(r => {
+        if (!r.exercise || r.weight <= 0) return;
+        if (!prs[r.exercise] || r.weight > prs[r.exercise].weight) {
+            prs[r.exercise] = { weight: r.weight, reps: r.reps, date: r.date };
+        }
+    });
+    const prList = Object.entries(prs)
+        .sort((a, b) => b[1].weight - a[1].weight)
+        .slice(0, 6);
+
+    const prEl = document.getElementById("pr-list");
+    const prEmpty = document.getElementById("pr-empty");
+    prEl.innerHTML = "";
+    if (!prList.length) {
+        prEmpty.classList.remove("hidden");
+    } else {
+        prEmpty.classList.add("hidden");
+        prList.forEach(([ex, info]) => {
+            const li = document.createElement("li");
+            li.className = "flex justify-between items-baseline border-b border-zinc-800/60 pb-1";
+            li.innerHTML = `
+                <span class="text-gray-200 truncate pr-2">${escapeHtml(ex)}</span>
+                <span class="text-pump-red font-bold whitespace-nowrap">${info.weight} <span class="text-[10px] text-gray-500">× ${info.reps}</span></span>
+            `;
+            prEl.appendChild(li);
+        });
+    }
+
+    // ─ Chart: weight-over-time for chosen exercise
+    const exercises = Object.keys(prs).sort();
+    const sel = document.getElementById("chart-exercise");
+    const prev = sel.value;
+    sel.innerHTML = exercises.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("");
+    if (exercises.includes(prev)) sel.value = prev;
+    sel.onchange = () => drawChart(sel.value, rows);
+    if (exercises.length) drawChart(sel.value || exercises[0], rows);
+    else document.getElementById("chart-empty").classList.remove("hidden");
+}
+
+function drawChart(exercise, rows) {
+    const svg = document.getElementById("progress-chart");
+    const empty = document.getElementById("chart-empty");
+    svg.innerHTML = "";
+
+    // For each date, take the heaviest set of this exercise that day
+    const byDate = {};
+    rows.filter(r => r.exercise === exercise && r.weight > 0).forEach(r => {
+        if (!byDate[r.date] || r.weight > byDate[r.date]) byDate[r.date] = r.weight;
+    });
+    const points = Object.entries(byDate)
+        .map(([d, w]) => ({ d: new Date(d), w }))
+        .sort((a, b) => a.d - b.d);
+
+    if (points.length < 2) {
+        empty.classList.remove("hidden");
+        return;
+    }
+    empty.classList.add("hidden");
+
+    const W = 600, H = 200, pad = 30;
+    const xs = points.map(p => p.d.getTime());
+    const ys = points.map(p => p.w);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const yPadRange = (yMax - yMin) || 1;
+    const yLo = yMin - yPadRange * 0.1, yHi = yMax + yPadRange * 0.1;
+
+    const px = (t) => pad + ((t - xMin) / (xMax - xMin || 1)) * (W - pad * 2);
+    const py = (v) => H - pad - ((v - yLo) / (yHi - yLo)) * (H - pad * 2);
+
+    // Grid baseline + max line
+    const ns = "http://www.w3.org/2000/svg";
+    [yLo, yHi].forEach((v, i) => {
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", pad); line.setAttribute("x2", W - pad);
+        line.setAttribute("y1", py(v)); line.setAttribute("y2", py(v));
+        line.setAttribute("stroke", "#2a2a2a"); line.setAttribute("stroke-dasharray", "2 4");
+        svg.appendChild(line);
+    });
+
+    // Area fill
+    const areaD = "M " + points.map(p => `${px(p.d.getTime())},${py(p.w)}`).join(" L ") +
+                  ` L ${px(xMax)},${H - pad} L ${px(xMin)},${H - pad} Z`;
+    const area = document.createElementNS(ns, "path");
+    area.setAttribute("d", areaD);
+    area.setAttribute("fill", "#D00000");
+    area.setAttribute("fill-opacity", "0.15");
+    svg.appendChild(area);
+
+    // Line
+    const lineD = "M " + points.map(p => `${px(p.d.getTime())},${py(p.w)}`).join(" L ");
+    const line = document.createElementNS(ns, "path");
+    line.setAttribute("d", lineD);
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "#D00000");
+    line.setAttribute("stroke-width", "2");
+    svg.appendChild(line);
+
+    // Points + labels
+    points.forEach((p, i) => {
+        const c = document.createElementNS(ns, "circle");
+        c.setAttribute("cx", px(p.d.getTime()));
+        c.setAttribute("cy", py(p.w));
+        c.setAttribute("r", "3.5");
+        c.setAttribute("fill", "#fff");
+        c.setAttribute("stroke", "#D00000");
+        c.setAttribute("stroke-width", "1.5");
+        svg.appendChild(c);
+        if (i === 0 || i === points.length - 1) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", px(p.d.getTime()));
+            t.setAttribute("y", py(p.w) - 8);
+            t.setAttribute("fill", "#aaa");
+            t.setAttribute("font-size", "10");
+            t.setAttribute("text-anchor", "middle");
+            t.textContent = p.w;
+            svg.appendChild(t);
+        }
+    });
+}
+
+function parseDateISO(v) {
+    if (!v) return null;
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    const s = String(v);
+    if (s.includes("T")) return s.slice(0,10);
+    const d = new Date(s);
+    return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+
+function startOfWeek(d) {
+    const x = new Date(d);
+    const day = x.getDay() || 7;       // Mon=1...Sun=7
+    if (day !== 1) x.setHours(-24 * (day - 1));
+    x.setHours(0, 0, 0, 0);
+    return x;
+}
+
+function isoWeekKey(d) {
+    const x = new Date(d);
+    x.setHours(0,0,0,0);
+    x.setDate(x.getDate() + 4 - (x.getDay() || 7));
+    const yearStart = new Date(x.getFullYear(), 0, 1);
+    const weekNo = Math.ceil((((x - yearStart) / 86400000) + 1) / 7);
+    return x.getFullYear() + "-W" + String(weekNo).padStart(2, "0");
+}
+
+function computeWeeklyStreak(dateSet) {
+    const weeks = new Set([...dateSet].map(d => isoWeekKey(new Date(d))));
+    if (!weeks.size) return 0;
+    let streak = 0;
+    let cursor = new Date();
+    while (weeks.has(isoWeekKey(cursor))) {
+        streak++;
+        cursor.setDate(cursor.getDate() - 7);
+    }
+    return streak;
+}
+
+function formatNumber(n) {
+    return n.toLocaleString("en-US");
+}
+
 
 function renderHistory() {
     if (!HISTORY.length) return;

@@ -33,15 +33,34 @@ function doGet(e) {
     var params = (e && e.parameter) || {};
     if (params.token !== SHARED_SECRET) return _json({ error: "unauthorized" }, 401);
 
+    var ss = SpreadsheetApp.getActive();
+
+    // Debug mode: tell me exactly what sheet I'm bound to and which tabs/emails I see
+    if (params.debug === "1") {
+      var sheetNames = ss.getSheets().map(function (s) { return s.getName(); });
+      var clientEmails = [];
+      var sh = ss.getSheetByName(SHEET_CLIENTS);
+      if (sh) {
+        var v = sh.getDataRange().getValues();
+        for (var i = 1; i < v.length; i++) clientEmails.push(String(v[i][0] || ""));
+      }
+      return _json({
+        spreadsheetName: ss.getName(),
+        spreadsheetId: ss.getId(),
+        tabs: sheetNames,
+        clientsTabFound: !!sh,
+        clientEmails: clientEmails
+      });
+    }
+
     var email = (params.email || "").toString().trim().toLowerCase();
     if (!email) return _json({ error: "missing email" }, 400);
 
-    var ss = SpreadsheetApp.getActive();
     var client = _findClient(ss, email);
     if (!client) return _json({ error: "client not found", email: email }, 404);
 
     var program = _getProgram(ss, client.AssignedProgram);
-    var history = _getRecentLogs(ss, email, 50);
+    var history = _getRecentLogs(ss, email, 500);
 
     return _json({ client: client, program: program, history: history });
   } catch (err) {
