@@ -89,7 +89,19 @@
 
 <header class="pt-32 pb-6 px-4">
     <div class="container mx-auto max-w-5xl">
-        <h1 class="text-4xl md:text-5xl font-black uppercase italic text-white mb-1">My Progress</h1>
+        <!-- Trainer-view banner: only shown when viewing another client's data -->
+        <div id="trainer-banner" class="hidden mb-4 bg-pump-card border border-pump-red rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="text-sm">
+                <span class="text-pump-red font-bold uppercase tracking-wider text-xs"><i class="fa-solid fa-user-tie mr-1"></i>Trainer view</span>
+                <span class="text-gray-400">Viewing</span>
+                <span id="trainer-banner-name" class="text-white font-semibold"></span>
+            </div>
+            <a href="/trainer/" class="text-xs uppercase font-bold text-gray-300 hover:text-pump-red">
+                <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <h1 id="page-title" class="text-4xl md:text-5xl font-black uppercase italic text-white mb-1">My Progress</h1>
         <p id="welcome-line" class="text-gray-400 text-sm">Loading your training history…</p>
     </div>
 </header>
@@ -183,14 +195,50 @@
 let HISTORY = [];
 
 async function bootApp(user) {
-    document.getElementById("welcome-line").textContent =
-        "Hey" + (user.user_metadata && user.user_metadata.full_name ? ", " + user.user_metadata.full_name.split(" ")[0] : "") + " — here's your training story.";
+    // Trainer view? Check ?client= in URL
+    const params = new URLSearchParams(location.search);
+    const targetClient = (params.get("client") || "").trim().toLowerCase();
+    const viewerEmail = (user.email || "").toLowerCase();
+    const isTrainerView = !!targetClient && targetClient !== viewerEmail;
+
+    let fetchUrl;
+    if (isTrainerView) {
+        // Use the trainer drill-down endpoint. Server returns 403 if viewer isn't a trainer.
+        fetchUrl = APPS_SCRIPT_URL +
+            "?token=" + encodeURIComponent(SHARED_TOKEN) +
+            "&action=trainer_client_detail" +
+            "&email=" + encodeURIComponent(viewerEmail) +
+            "&target=" + encodeURIComponent(targetClient);
+    } else {
+        fetchUrl = APPS_SCRIPT_URL +
+            "?token=" + encodeURIComponent(SHARED_TOKEN) +
+            "&email=" + encodeURIComponent(viewerEmail);
+    }
+
     try {
-        const url = APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((user.email||"").toLowerCase());
-        const res = await fetch(url);
+        const res = await fetch(fetchUrl);
         const data = await res.json();
+        if (data.error === "forbidden") {
+            return showError("You don't have trainer access — only Edgar and other allowlisted coaches can view another client's progress.");
+        }
         if (data.error) throw new Error(data.error);
+
         HISTORY = data.history || [];
+
+        // Header / welcome text
+        if (isTrainerView) {
+            const c = data.client || {};
+            const displayName = c.Name || targetClient;
+            document.getElementById("trainer-banner").classList.remove("hidden");
+            document.getElementById("trainer-banner-name").textContent = displayName + " · " + targetClient;
+            document.getElementById("page-title").textContent = displayName.split(" ")[0] + "'s Progress";
+            document.getElementById("welcome-line").textContent =
+                "Program: " + (c.AssignedProgram || "—") + " · " + HISTORY.length + " logged sets";
+        } else {
+            document.getElementById("welcome-line").textContent =
+                "Hey" + (user.user_metadata && user.user_metadata.full_name ? ", " + user.user_metadata.full_name.split(" ")[0] : "") + " — here's your training story.";
+        }
+
         document.getElementById("loading-state").classList.add("hidden");
 
         if (!HISTORY.length) {

@@ -224,8 +224,8 @@ function renderClients() {
     clients.forEach(c => {
         const idle = (c.daysSinceLast === null || c.daysSinceLast >= 7);
         const idleLabel = c.daysSinceLast === null ? "no sessions yet" : `${c.daysSinceLast}d ago`;
-        const card = document.createElement("button");
-        card.className = "text-left bg-pump-card border rounded-xl p-5 transition hover:border-pump-red " +
+        const card = document.createElement("div");
+        card.className = "bg-pump-card border rounded-xl p-5 transition hover:border-pump-red " +
                          (idle ? "border-red-900" : "border-zinc-800");
         card.innerHTML = `
             <div class="flex items-baseline justify-between mb-2">
@@ -241,9 +241,25 @@ function renderClients() {
             </div>
 
             <p class="text-xs text-gray-500 mb-1">Last: <span class="${idle ? 'text-pump-red' : 'text-gray-300'}">${idleLabel}</span></p>
-            ${c.topPRs && c.topPRs.length ? `<p class="text-xs text-gray-500">Top PR: <span class="text-gray-300">${escapeHtml(c.topPRs[0].exercise)} ${c.topPRs[0].weight}</span></p>` : ''}
+            ${c.topPRs && c.topPRs.length ? `<p class="text-xs text-gray-500 mb-3">Top PR: <span class="text-gray-300">${escapeHtml(c.topPRs[0].exercise)} ${c.topPRs[0].weight}</span></p>` : ''}
+
+            <div class="flex gap-2 mt-3">
+                <button type="button" data-action="quick" data-email="${escapeAttr(c.email)}"
+                        class="flex-1 text-[11px] uppercase font-bold tracking-wider border border-zinc-700 hover:border-pump-red text-gray-300 py-2 rounded-md transition">
+                    Quick View
+                </button>
+                <a href="/workouts/progress.html?client=${encodeURIComponent(c.email)}"
+                   class="flex-1 text-[11px] uppercase font-bold tracking-wider bg-pump-red hover:bg-red-700 text-white py-2 rounded-md transition text-center">
+                    Full Charts
+                </a>
+            </div>
         `;
-        card.onclick = () => openDetail(c.email);
+
+        // Bind buttons (don't bubble click to outer card)
+        card.querySelector('[data-action="quick"]').addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            openDetail(c.email);
+        });
         grid.appendChild(card);
     });
 }
@@ -295,7 +311,13 @@ async function openDetail(email) {
 
         const recent = (data.history || []).slice(0, 30);
         body.innerHTML = `
-            <h2 class="text-2xl font-black text-white mb-1">${escapeHtml(data.client.Name || email)}</h2>
+            <div class="flex flex-wrap items-baseline justify-between gap-3 mb-1">
+                <h2 class="text-2xl font-black text-white">${escapeHtml(data.client.Name || email)}</h2>
+                <a href="/workouts/progress.html?client=${encodeURIComponent(email)}"
+                   class="text-xs uppercase font-bold tracking-wider bg-pump-red hover:bg-red-700 text-white px-3 py-2 rounded-md transition">
+                    <i class="fa-solid fa-chart-line mr-1"></i> View Full Charts
+                </a>
+            </div>
             <p class="text-sm text-gray-500 mb-4">${escapeHtml(email)} · ${escapeHtml(data.client.AssignedProgram || "")}</p>
             <h3 class="text-xs uppercase tracking-wider text-gray-400 mb-2">Recent sets (latest 30)</h3>
             <div class="text-sm space-y-1 max-h-80 overflow-y-auto pr-2">
@@ -336,6 +358,7 @@ function formatDate(v) {
 function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+function escapeAttr(s) { return escapeHtml(s); }
 function showError(msg) {
     document.getElementById("loading-state").classList.add("hidden");
     const box = document.getElementById("error-state");
