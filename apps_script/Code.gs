@@ -25,6 +25,9 @@ var SHARED_SECRET = "PumpNationNationLONZ"; // must match the token in index.htm
 var SHEET_CLIENTS  = "Clients";
 var SHEET_PROGRAMS = "Programs";
 var SHEET_LOGS     = "Logs";
+
+// Emails allowed to hit the trainer-overview endpoint. Add other coaches here.
+var TRAINER_EMAILS = ["edalopez90@gmail.com"];
 // --------------------------------------------------------------------------
 
 
@@ -55,6 +58,30 @@ function doGet(e) {
 
     var email = (params.email || "").toString().trim().toLowerCase();
     if (!email) return _json({ error: "missing email" }, 400);
+
+    // ── Trainer overview ───────────────────────────────────────────────
+    if (params.action === "trainer_overview") {
+      if (TRAINER_EMAILS.map(String).map(function (s) { return s.toLowerCase(); }).indexOf(email) === -1) {
+        return _json({ error: "forbidden", email: email }, 403);
+      }
+      return _json(_buildTrainerOverview(ss));
+    }
+
+    // ── Trainer drill-down on a single client ─────────────────────────
+    if (params.action === "trainer_client_detail") {
+      if (TRAINER_EMAILS.map(String).map(function (s) { return s.toLowerCase(); }).indexOf(email) === -1) {
+        return _json({ error: "forbidden" }, 403);
+      }
+      var targetEmail = (params.target || "").toString().trim().toLowerCase();
+      if (!targetEmail) return _json({ error: "missing target email" }, 400);
+      var c = _findClient(ss, targetEmail);
+      if (!c) return _json({ error: "client not found", email: targetEmail }, 404);
+      return _json({
+        client: c,
+        program: _getProgram(ss, c.AssignedProgram),
+        history: _getRecentLogs(ss, targetEmail, 500)
+      });
+    }
 
     var client = _findClient(ss, email);
     if (!client) return _json({ error: "client not found", email: email }, 404);
@@ -262,8 +289,141 @@ function _today() {
   return d.getFullYear() + "-" + mm + "-" + dd;
 }
 
+// ── Trainer overview: every client + summary stats ────────────────────────
+function _buildTrainerOverview(ss) {
+  var csh = ss.getSheetByName(SHEET_CLIENTS);
+  if (!csh) return { clients: [], generatedAt: new Date().toISOString() };
+  var cvals = csh.getDataRange().getValues();
+  if (cvals.length < 2) return { clients: [], generatedAt: new Date().toISOString() };
+  var cHeaders = cvals[0];
+  var emailIdx = _col(cHeaders, "Email", "ClientEmail");
+  var nameIdx  = _col(cHeaders, "Name", "ClientName");
+  var progIdx  = _col(cHeaders, "AssignedProgram", "Assigned Program", "Program");
+  var activeIdx = _col(cHeaders, "Active", "Status");
+
+  // All logs, grouped by email
+  var lsh = ss.getSheetByName(SHEET_LOGS);
+  var logsByEmail = {};
+  if (lsh) {
+    var lvals = lsh.getDataRange().getValues();
+    if (lvals.length >= 2) {
+      var lHeaders = lvals[0];
+      var lEmail   = _col(lHeaders, "ClientEmail", "Email");
+      var lDate    = _col(lHeaders, "Date");
+      var lExer    = _col(lHeaders, "Exercise");
+      var lReps    = _col(lHeaders, "Reps");
+      var lWeight  = _col(lHeaders, "Weight");
+      for (var r = 1; r < lvals.length; r++) {
+        var em = String(lvals[r][lEmail] || "").toLowerCase().trim();
+        if (!em) continue;
+        (logsByEmail[em] = logsByEmail[em] || []).push({
+          Date: lvals[r][lDate],
+          Exercise: lvals[r][lExer],
+          Reps: lvals[r][lReps],
+          Weight: lvals[r][lWeight]
+        });
+      }
+    }
+  }
+
+  // Per-client summary
+  var now = new Date();
+  var weekStart = _startOfIsoWeek(now);
+  var clients = [];
+  for (var i = 1; i < cvals.length; i++) {
+    var row = cvals[i];
+    var em = String(row[emailIdx] || "").toLowerCase().trim();
+    if (!em) continue;
+    var logs = logsByEmail[em] || [];
+
+    var sessionDates = {};
+    var totalVol = 0;
+    var prByEx = {};
+    var lastDate = null;
+
+    logs.forEach(function (l) {
+      var d = _toDateOnly(l.Date);
+      if (!d) return;
+      sessionDates[d] = true;
+      var dObj = new Date(d);
+      if (!lastDate || dObj > lastDate) lastDate = dObj;
+      var reps = parseFloat(l.Reps) || 0;
+      var w = parseFloat(String(l.Weight).replace(/[^\d.]/g, "")) || 0;
+      totalVol += reps * w;
+      var ex = String(l.Exercise || "");
+      if (ex && w > 0 && (!prByEx[ex] || w > prByEx[ex].weight)) {
+        prByEx[ex] = { weight: w, reps: reps };
+      }
+    });
+
+    var thisWeekDays = {};
+    Object.keys(sessionDates).forEach(function (d) {
+      if (new Date(d) >= weekStart) thisWeekDays[d] = true;
+    });
+
+    var prList = [];
+    Object.keys(prByEx).forEach(function (k) {
+      prList.push({ exercise: k, weight: prByEx[k].weight, reps: prByEx[k].reps });
+    });
+    prList.sort(function (a, b) { return b.weight - a.weight; });
+    prList = prList.slice(0, 3);
+
+    var daysSince = lastDate ? Math.floor((now - lastDate) / 86400000) : null;
+
+    clients.push({
+      email: em,
+      name:  String(row[nameIdx] || ""),
+      program: String(row[progIdx] || ""),
+      active: activeIdx === -1 ? "" : String(row[activeIdx] || ""),
+      totalSessions: Object.keys(sessionDates).length,
+      sessionsThisWeek: Object.keys(thisWeekDays).length,
+      totalVolume: Math.round(totalVol),
+      lastSessionDate: lastDate ? lastDate.toISOString().slice(0,10) : null,
+      daysSinceLast: daysSince,
+      topPRs: prList
+    });
+  }
+
+  // Sort: anyone idle 7+ days (or never) first, then by most recent activity
+  clients.sort(function (a, b) {
+    var aIdle = (a.daysSinceLast === null || a.daysSinceLast >= 7) ? 1 : 0;
+    var bIdle = (b.daysSinceLast === null || b.daysSinceLast >= 7) ? 1 : 0;
+    if (aIdle !== bIdle) return bIdle - aIdle;
+    return (a.daysSinceLast === null ? 9999 : a.daysSinceLast) - (b.daysSinceLast === null ? 9999 : b.daysSinceLast);
+  });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    clientCount: clients.length,
+    needsAttention: clients.filter(function (c) { return c.daysSinceLast === null || c.daysSinceLast >= 7; }).length,
+    clients: clients
+  };
+}
+
+function _toDateOnly(v) {
+  if (!v) return null;
+  if (v instanceof Date) return v.toISOString().slice(0,10);
+  var s = String(v);
+  if (s.indexOf("T") !== -1) return s.slice(0,10);
+  var d = new Date(s);
+  return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+
+function _startOfIsoWeek(d) {
+  var x = new Date(d);
+  var day = x.getDay() || 7;
+  if (day !== 1) x.setHours(-24 * (day - 1));
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
 // Manual test helper — run from the editor with your own email
 function _testGet() {
   var res = doGet({ parameter: { token: SHARED_SECRET, email: "YOUR_EMAIL_HERE" } });
+  Logger.log(res.getContent());
+}
+
+function _testTrainer() {
+  var res = doGet({ parameter: { token: SHARED_SECRET, email: "edalopez90@gmail.com", action: "trainer_overview" } });
   Logger.log(res.getContent());
 }
