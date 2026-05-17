@@ -1,0 +1,16 @@
+# Client data — never commit spreadsheets with personal info
+*.xlsx
+*.xls
+*.csv
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.code-workspace
+
+# Node (if ever added)
+node_modules/

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pump Nation | Workouts of the Week</title>
+    <title>Pump Nation | My Workouts</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -26,110 +26,386 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         body { display: none; }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .day-tab.active { background:#D00000; color:#fff; }
     </style>
 </head>
 
 <body class="bg-pump-dark text-gray-200">
+
+<!-- ============================================================
+     CONFIG — paste your deployed Apps Script /exec URL here, and
+     make sure the token matches SHARED_SECRET in Code.gs.
+     ============================================================ -->
+<script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
+    const SHARED_TOKEN    = "PumpNationNationLONZ";
+</script>
+
+<!-- Netlify Identity (member auth) -->
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script>
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", user => {
-      if (!user) {
-        window.location.replace("/login.html");
-      } else {
+    let CURRENT_USER = null;
+
+    // ── Dev bypass: skip auth when running locally ──────────────────────────
+    const IS_LOCAL = location.hostname === "localhost" ||
+                     location.hostname === "127.0.0.1" ||
+                     location.protocol === "file:";
+
+    if (IS_LOCAL) {
+        // Show the page and boot with a dummy user so the UI renders locally.
+        // Replace the email below with a real address that exists in the sheet
+        // if you want to test live Apps Script data.
         document.body.style.display = "block";
-      }
-    });
-  }
+        CURRENT_USER = { email: "dev@local.test", user_metadata: { full_name: "Dev User" } };
+        document.addEventListener("DOMContentLoaded", () => bootApp(CURRENT_USER));
+    } else if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+            if (!user) {
+                window.location.replace("/login.html");
+            } else {
+                CURRENT_USER = user;
+                document.body.style.display = "block";
+                bootApp(user);
+            }
+        });
+        window.netlifyIdentity.on("logout", () => window.location.replace("/login.html"));
+    }
 </script>
 
 
 <!-- NAV -->
 <nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
     <div class="container mx-auto px-6 flex justify-between items-center">
-        <a href="/">
-            <img src="/logo.png" class="h-10" alt="Pump Nation">
-        </a>
-
-        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300">
+        <a href="/"><img src="/logo.png" class="h-10" alt="Pump Nation"></a>
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300 items-center">
             <a href="/">HOME</a>
-<a href="/trainers.html">TRAINERS</a>
-<a href="/workouts/" class="text-pump-red">WORKOUTS</a>
-
+            <a href="/trainers.html">TRAINERS</a>
+            <a href="/workouts/" class="text-pump-red">WORKOUTS</a>
+            <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
         </div>
     </div>
 </nav>
 
+
 <!-- HERO -->
-<header class="pt-32 pb-20 text-center">
-    <h1 class="text-4xl md:text-6xl font-black uppercase italic text-white mb-4">
-        Workouts of the Week
+<header class="pt-32 pb-10 text-center px-4">
+    <h1 class="text-4xl md:text-6xl font-black uppercase italic text-white mb-3">
+        My Workouts
     </h1>
-    <p class="text-gray-400 max-w-xl mx-auto">
-        Updated weekly. Train with purpose. No guesswork.
+    <p id="welcome-line" class="text-gray-400 max-w-xl mx-auto">
+        Loading your program…
     </p>
 </header>
 
+
+<!-- DAY TABS -->
+<section class="px-4">
+    <div id="day-tabs" class="container mx-auto flex flex-wrap justify-center gap-2 mb-10"></div>
+</section>
+
+
 <!-- WORKOUTS -->
-<section class="py-16">
-    <div class="container mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+<section class="pb-16 px-4">
+    <div id="workout-area" class="container mx-auto max-w-4xl"></div>
 
-        <!-- DAY CARD -->
-        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
-            <h3 class="text-xl font-bold uppercase text-white mb-2">Monday</h3>
-            <p class="text-pump-red text-sm font-semibold mb-4">Strength + Conditioning</p>
+    <div id="loading-state" class="container mx-auto max-w-2xl text-center text-gray-500 py-20">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pump-red mb-4"></i>
+        <p>Pulling today's workout from your coach…</p>
+    </div>
 
-            <ul class="text-gray-300 text-sm space-y-2">
-                <li>• Back Squat — 5x5</li>
-                <li>• Bulgarian Split Squats — 3x10</li>
-                <li>• Walking Lunges — 3x20</li>
-                <li>• Assault Bike — 6 rounds (30s / 90s)</li>
-            </ul>
-        </div>
-
-        <!-- DAY CARD -->
-        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
-            <h3 class="text-xl font-bold uppercase text-white mb-2">Tuesday</h3>
-            <p class="text-pump-red text-sm font-semibold mb-4">Upper Body</p>
-
-            <ul class="text-gray-300 text-sm space-y-2">
-                <li>• Bench Press — 5x5</li>
-                <li>• Bent Over Rows — 4x8</li>
-                <li>• Push-ups — 3x max</li>
-                <li>• Core Circuit — 10 min</li>
-            </ul>
-        </div>
-
-        <!-- DAY CARD -->
-        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6">
-            <h3 class="text-xl font-bold uppercase text-white mb-2">Wednesday</h3>
-            <p class="text-pump-red text-sm font-semibold mb-4">HYROX Style</p>
-
-            <ul class="text-gray-300 text-sm space-y-2">
-                <li>• Sled Push — 6 rounds</li>
-                <li>• Wall Balls — 100 reps</li>
-                <li>• Farmer Carry — 200m</li>
-                <li>• Row — 1000m</li>
-            </ul>
-        </div>
-
-        <!-- Add Thu / Fri / Sat as needed -->
-
+    <div id="error-state" class="hidden container mx-auto max-w-2xl bg-pump-card border border-red-900 rounded-xl p-6 text-center">
+        <i class="fa-solid fa-triangle-exclamation text-2xl text-pump-red mb-3"></i>
+        <h3 class="text-xl font-bold text-white mb-2">Couldn't load your program</h3>
+        <p id="error-msg" class="text-gray-400 text-sm"></p>
+        <p class="text-gray-500 text-xs mt-4">
+            If you just signed up, your coach hasn't added you to the program sheet yet. Reach out and we'll get you set up.
+        </p>
     </div>
 </section>
 
-<!-- CTA -->
-<section class="py-20 text-center bg-pump-red text-white">
-    <h2 class="text-3xl font-black uppercase mb-4">Want Coaching With This?</h2>
-    <p class="mb-8 opacity-90">
-        Follow the plan or train with a coach to dial it in.
-    </p>
-    <a href="https://goteamup.com/p/8192143-pump/memberships/201335/"
-       target="_blank"
-       class="bg-white text-pump-red px-8 py-4 font-bold uppercase tracking-wide hover:bg-black hover:text-white transition">
-        Join Pump Nation
-    </a>
+
+<!-- HISTORY -->
+<section id="history-section" class="hidden pb-20 px-4">
+    <div class="container mx-auto max-w-4xl">
+        <h2 class="text-2xl font-black uppercase italic text-white mb-4">Recent Sessions</h2>
+        <div id="history-list" class="space-y-3"></div>
+    </div>
 </section>
+
+
+<!-- Save toast -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-pump-red text-white px-6 py-3 rounded-full shadow-lg font-semibold z-50">
+    Workout saved
+</div>
+
+
+<script>
+// =============================================================
+//  APP LOGIC
+// =============================================================
+let PROGRAM = [];   // rows from Programs sheet for this client
+let CLIENT  = null; // client row
+let HISTORY = [];   // recent log rows
+let ACTIVE_DAY = null;
+
+// ── Mock data used when running locally (no real sheet needed) ────────────
+const MOCK_DATA = {
+    client:  { Name: "Dev User", AssignedProgram: "Demo Program" },
+    program: [
+        { Day: "Monday",    Focus: "Push",  Exercise: "Bench Press",       TargetSets: 4, TargetReps: "8-10",  TargetWeight: "135 lb", Notes: "" },
+        { Day: "Monday",    Focus: "Push",  Exercise: "Overhead Press",     TargetSets: 3, TargetReps: "10",    TargetWeight: "75 lb",  Notes: "" },
+        { Day: "Monday",    Focus: "Push",  Exercise: "Tricep Pushdown",    TargetSets: 3, TargetReps: "12-15", TargetWeight: "50 lb",  Notes: "" },
+        { Day: "Wednesday", Focus: "Pull",  Exercise: "Pull-Ups",           TargetSets: 4, TargetReps: "6-8",   TargetWeight: "BW",     Notes: "" },
+        { Day: "Wednesday", Focus: "Pull",  Exercise: "Barbell Row",        TargetSets: 3, TargetReps: "8",     TargetWeight: "115 lb", Notes: "" },
+        { Day: "Friday",    Focus: "Legs",  Exercise: "Back Squat",         TargetSets: 4, TargetReps: "6",     TargetWeight: "185 lb", Notes: "Warm up well" },
+        { Day: "Friday",    Focus: "Legs",  Exercise: "Romanian Deadlift",  TargetSets: 3, TargetReps: "10",    TargetWeight: "135 lb", Notes: "" },
+        { Day: "Friday",    Focus: "Legs",  Exercise: "Leg Press",          TargetSets: 3, TargetReps: "12",    TargetWeight: "200 lb", Notes: "" },
+    ],
+    history: []
+};
+
+async function bootApp(user) {
+    const email = (user.email || "").toLowerCase();
+    document.getElementById("welcome-line").textContent =
+        "Welcome back" + (user.user_metadata && user.user_metadata.full_name ? ", " + user.user_metadata.full_name.split(" ")[0] : "") + ".";
+
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.startsWith("PASTE_")) {
+        return showError("The trainer hasn't finished setting up the spreadsheet connection yet. (Missing APPS_SCRIPT_URL.)");
+    }
+
+    // ── Skip the network call entirely when running locally ─────────────────
+    if (typeof IS_LOCAL !== "undefined" && IS_LOCAL) {
+        CLIENT  = MOCK_DATA.client;
+        PROGRAM = MOCK_DATA.program;
+        HISTORY = MOCK_DATA.history;
+    } else {
+
+    try {
+        const url = APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent(email);
+        const res = await fetch(url, { method: "GET" });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        CLIENT  = data.client || {};
+        PROGRAM = data.program || [];
+        HISTORY = data.history || [];
+    } catch (err) {
+        return showError(err.message || String(err));
+    }
+
+    } // end IS_LOCAL else block
+
+    if (!PROGRAM.length) return showError("You're set up, but no program is assigned to '" + (CLIENT.AssignedProgram || "?") + "' in the sheet yet.");
+
+    renderDayTabs();
+    const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+    const daysInProgram = uniqueDays();
+    ACTIVE_DAY = daysInProgram.includes(today) ? today : daysInProgram[0];
+    renderDay(ACTIVE_DAY);
+    renderHistory();
+    document.getElementById("loading-state").classList.add("hidden");
+}
+
+function uniqueDays() {
+    const order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    const set = new Set(PROGRAM.map(r => r.Day));
+    return order.filter(d => set.has(d));
+}
+
+function renderDayTabs() {
+    const container = document.getElementById("day-tabs");
+    container.innerHTML = "";
+    uniqueDays().forEach(day => {
+        const btn = document.createElement("button");
+        btn.className = "day-tab px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide border border-zinc-700 hover:border-pump-red text-gray-300";
+        btn.textContent = day;
+        btn.onclick = () => { ACTIVE_DAY = day; renderDay(day); };
+        btn.dataset.day = day;
+        container.appendChild(btn);
+    });
+}
+
+function renderDay(day) {
+    document.querySelectorAll(".day-tab").forEach(b => b.classList.toggle("active", b.dataset.day === day));
+    const rows = PROGRAM.filter(r => r.Day === day);
+    const focus = (rows[0] && rows[0].Focus) || "";
+
+    const area = document.getElementById("workout-area");
+    area.innerHTML = `
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-6 md:p-8">
+            <div class="flex flex-wrap items-baseline justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black uppercase text-white">${day}</h2>
+                    <p class="text-pump-red text-sm font-semibold uppercase mt-1">${focus}</p>
+                </div>
+                <p class="text-xs text-gray-500">Program: ${CLIENT.AssignedProgram || ""}</p>
+            </div>
+
+            <form id="log-form" class="space-y-6">
+                ${rows.map((r, i) => exerciseBlock(r, i)).join("")}
+
+                <div class="flex flex-col md:flex-row gap-3 pt-4 border-t border-zinc-800">
+                    <input id="session-date" type="date" class="bg-pump-dark border border-zinc-700 rounded-lg px-4 py-3 text-gray-200" value="${new Date().toISOString().slice(0,10)}">
+                    <button type="submit" class="flex-1 bg-pump-red hover:bg-red-700 transition font-bold uppercase tracking-wide px-8 py-3 rounded-lg text-white">
+                        <i class="fa-solid fa-floppy-disk mr-2"></i> Save Workout
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.getElementById("log-form").addEventListener("submit", onSave);
+}
+
+function exerciseBlock(r, idx) {
+    const setCount = parseInt(r.TargetSets, 10) || 1;
+    const setsHtml = [];
+    for (let s = 1; s <= setCount; s++) {
+        setsHtml.push(`
+            <div class="grid grid-cols-12 gap-2 items-center" data-set="${s}">
+                <span class="col-span-2 text-xs text-gray-500 uppercase">Set ${s}</span>
+                <input name="reps"   placeholder="reps"   inputmode="numeric" class="col-span-3 bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+                <input name="weight" placeholder="lb/kg" inputmode="decimal" class="col-span-4 bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+                <input name="rpe"    placeholder="RPE"    inputmode="numeric" class="col-span-3 bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+            </div>
+        `);
+    }
+    return `
+        <div class="exercise border border-zinc-800 rounded-lg p-4" data-exercise="${escapeHtml(r.Exercise)}">
+            <div class="flex flex-wrap items-baseline justify-between mb-3">
+                <h3 class="text-lg font-bold text-white">${escapeHtml(r.Exercise)}</h3>
+                <span class="text-xs text-pump-red font-semibold">${r.TargetSets} × ${escapeHtml(String(r.TargetReps || ""))} ${r.TargetWeight ? "@ " + escapeHtml(String(r.TargetWeight)) : ""}</span>
+            </div>
+            ${r.Notes ? `<p class="text-xs text-gray-500 italic mb-3">${escapeHtml(String(r.Notes))}</p>` : ""}
+            <div class="space-y-2">${setsHtml.join("")}</div>
+            <input name="ex-notes" placeholder="Notes (optional)" class="mt-3 w-full bg-pump-dark border border-zinc-700 rounded px-3 py-2 text-sm text-gray-300">
+        </div>
+    `;
+}
+
+async function onSave(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector("button[type=submit]");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Saving…';
+
+    const date = document.getElementById("session-date").value;
+    const entries = [];
+    document.querySelectorAll(".exercise").forEach(block => {
+        const exercise = block.dataset.exercise;
+        const exNotes  = block.querySelector('input[name="ex-notes"]').value;
+        block.querySelectorAll("[data-set]").forEach(setRow => {
+            const reps   = setRow.querySelector('input[name="reps"]').value;
+            const weight = setRow.querySelector('input[name="weight"]').value;
+            const rpe    = setRow.querySelector('input[name="rpe"]').value;
+            if (!reps && !weight && !rpe) return; // skip blank sets
+            entries.push({
+                exercise: exercise,
+                setNumber: setRow.dataset.set,
+                reps: reps,
+                weight: weight,
+                rpe: rpe,
+                notes: exNotes
+            });
+        });
+    });
+
+    if (!entries.length) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Workout';
+        return alert("Fill in at least one set before saving.");
+    }
+
+    try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            // Apps Script Web Apps don't accept custom JSON content-type without
+            // a preflight workaround. Send as text/plain — Code.gs parses JSON.
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+                token: SHARED_TOKEN,
+                email: (CURRENT_USER.email || "").toLowerCase(),
+                name:  (CURRENT_USER.user_metadata && CURRENT_USER.user_metadata.full_name) || CLIENT.Name || "",
+                date: date,
+                programName: CLIENT.AssignedProgram || "",
+                day: ACTIVE_DAY,
+                entries: entries
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast(`Saved ${data.written} sets`);
+        // refresh history from server
+        const refreshed = await fetch(APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((CURRENT_USER.email||"").toLowerCase()));
+        const refData = await refreshed.json();
+        HISTORY = refData.history || [];
+        renderHistory();
+    } catch (err) {
+        alert("Couldn't save: " + err.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-2"></i> Save Workout';
+    }
+}
+
+function renderHistory() {
+    if (!HISTORY.length) return;
+    document.getElementById("history-section").classList.remove("hidden");
+    const list = document.getElementById("history-list");
+
+    // Group by Date + Day
+    const groups = {};
+    HISTORY.forEach(r => {
+        const d = formatDate(r.Date);
+        const key = d + " · " + (r.Day || "");
+        (groups[key] = groups[key] || []).push(r);
+    });
+
+    list.innerHTML = Object.keys(groups).slice(0, 10).map(key => {
+        const rows = groups[key];
+        return `
+            <details class="bg-pump-card border border-zinc-800 rounded-lg">
+                <summary class="cursor-pointer px-4 py-3 flex justify-between items-center">
+                    <span class="font-semibold text-white">${escapeHtml(key)}</span>
+                    <span class="text-xs text-gray-500">${rows.length} sets</span>
+                </summary>
+                <div class="px-4 pb-4 text-sm text-gray-400 space-y-1">
+                    ${rows.map(r => `<div>• <span class="text-gray-200">${escapeHtml(String(r.Exercise||""))}</span> — set ${r.SetNumber || ""}: ${r.Reps||"-"} reps @ ${r.Weight||"-"} ${r.RPE ? "RPE " + r.RPE : ""}</div>`).join("")}
+                </div>
+            </details>
+        `;
+    }).join("");
+}
+
+function formatDate(v) {
+    if (!v) return "";
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    const s = String(v);
+    // Handle the ISO timestamp Apps Script returns for Date cells
+    if (s.includes("T")) return s.slice(0,10);
+    return s;
+}
+
+function showError(msg) {
+    document.getElementById("loading-state").classList.add("hidden");
+    const box = document.getElementById("error-state");
+    box.classList.remove("hidden");
+    document.getElementById("error-msg").textContent = msg;
+}
+
+function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.remove("hidden");
+    setTimeout(() => t.classList.add("hidden"), 2500);
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+</script>
 
 </body>
 </html>
