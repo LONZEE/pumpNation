@@ -2,9 +2,20 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Pump Nation | Elevate Your Performance</title>
-    
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#D00000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pump Nation">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Required on every page so Netlify Identity can process confirmation
          and password-reset tokens that land on the root URL. -->
@@ -326,6 +337,13 @@
             mobileMenu.classList.add("hidden");
         });
     });
+
+    // PWA: register service worker
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("/sw.js").catch(err => console.warn("SW register failed:", err));
+        });
+    }
 </script>
 
 </body>
