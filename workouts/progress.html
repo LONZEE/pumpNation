@@ -45,9 +45,28 @@
                      location.protocol === "file:";
 
     if (IS_LOCAL) {
+        // ── LOCAL DEV ONLY ──────────────────────────────────────────────────
+        // ?as=email@... lets you preview ANY client's progress locally without
+        // logging in as them. Ignored entirely in production.
+        const localParams = new URLSearchParams(location.search);
+        const asEmail = (localParams.get("as") || "").trim().toLowerCase();
+        const defaultEmail = "edalopez90@gmail.com";
+        const useEmail = asEmail || defaultEmail;
+
         document.body.style.display = "block";
-        CURRENT_USER = { email: "edalopez90@gmail.com", user_metadata: { full_name: "Edgar Lopez" } };
-        document.addEventListener("DOMContentLoaded", () => bootApp(CURRENT_USER));
+        CURRENT_USER = {
+            email: useEmail,
+            user_metadata: { full_name: asEmail ? "(impersonating " + asEmail + ")" : "Edgar Lopez" }
+        };
+
+        const badge = document.createElement("div");
+        badge.style.cssText = "position:fixed;bottom:10px;left:10px;z-index:9999;background:#D00000;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.4);";
+        badge.innerHTML = (asEmail ? "👁 PREVIEWING " + asEmail : "🔧 LOCAL DEV · " + defaultEmail) +
+            ' <a href="?" style="color:#fff;text-decoration:underline;margin-left:6px;font-weight:400;">reset</a>';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(badge);
+            bootApp(CURRENT_USER);
+        });
     } else if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
             if (!user) {
@@ -71,6 +90,9 @@
             <a href="/" class="hover:text-pump-red transition">HOME</a>
             <a href="/workouts/" class="hover:text-pump-red transition">WORKOUTS</a>
             <a href="/workouts/progress.html" class="text-pump-red">PROGRESS</a>
+            <a href="/dashboard/" id="nav-dashboard-desktop" class="hidden hover:text-pump-red transition text-yellow-400">
+                <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+            </a>
             <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
         </div>
         <div class="md:hidden relative">
@@ -79,6 +101,9 @@
                 <a href="/" class="block px-4 py-3 hover:text-pump-red">HOME</a>
                 <a href="/workouts/" class="block px-4 py-3 hover:text-pump-red">WORKOUTS</a>
                 <a href="/workouts/progress.html" class="block px-4 py-3 text-pump-red">PROGRESS</a>
+                <a href="/dashboard/" id="nav-dashboard-mobile" class="hidden px-4 py-3 hover:text-pump-red transition text-yellow-400">
+                    <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+                </a>
                 <div class="border-t border-zinc-800"></div>
                 <button onclick="netlifyIdentity.logout()" class="block w-full text-left px-4 py-3 hover:text-pump-red">LOG OUT</button>
             </div>
@@ -96,7 +121,7 @@
                 <span class="text-gray-400">Viewing</span>
                 <span id="trainer-banner-name" class="text-white font-semibold"></span>
             </div>
-            <a href="/trainer/" class="text-xs uppercase font-bold text-gray-300 hover:text-pump-red">
+            <a href="/dashboard/" class="text-xs uppercase font-bold text-gray-300 hover:text-pump-red">
                 <i class="fa-solid fa-arrow-left mr-1"></i> Back to Dashboard
             </a>
         </div>
@@ -494,6 +519,25 @@ function showError(msg) {
     box.classList.remove("hidden");
     document.getElementById("error-msg").textContent = msg;
 }
+
+// Trainer-only DASHBOARD nav link — keep in sync with TRAINER_EMAILS in Code.gs.
+// Server-side gating in Apps Script is the real security; this just hides the link.
+const TRAINER_EMAILS_UI = ["edalopez90@gmail.com"];
+(function () {
+    let tries = 0;
+    const poll = setInterval(() => {
+        if (CURRENT_USER || ++tries > 40) {
+            clearInterval(poll);
+            const email = (CURRENT_USER && CURRENT_USER.email || "").toLowerCase();
+            if (TRAINER_EMAILS_UI.includes(email)) {
+                ["nav-dashboard-desktop","nav-dashboard-mobile"].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.remove("hidden");
+                });
+            }
+        }
+    }, 100);
+})();
 
 // Hamburger
 (function () {

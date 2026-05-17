@@ -1,6 +1,6 @@
 /* Pump Nation service worker — basic offline shell + bypass API calls */
 
-const VERSION = "v5";  // bump when you change cached files to force a refresh
+const VERSION = "v7";  // bump when you change cached files to force a refresh
 const SHELL_CACHE = `pump-shell-${VERSION}`;
 
 // Files we always want available offline (the "app shell").

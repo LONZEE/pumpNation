@@ -65,12 +65,30 @@
                      location.protocol === "file:";
 
     if (IS_LOCAL) {
-        // Show the page and boot with a dummy user so the UI renders locally.
-        // Replace the email below with a real address that exists in the sheet
-        // if you want to test live Apps Script data.
+        // ── LOCAL DEV ONLY ──────────────────────────────────────────────────
+        // Default to the trainer's email so the page boots with real data.
+        // Override by adding ?as=client@email.com in the URL to preview
+        // what THAT client sees. The ?as switch is ignored in production.
+        const localParams = new URLSearchParams(location.search);
+        const asEmail = (localParams.get("as") || "").trim().toLowerCase();
+        const defaultEmail = "edalopez90@gmail.com";
+        const useEmail = asEmail || defaultEmail;
+
         document.body.style.display = "block";
-        CURRENT_USER = { email: "dev@local.test", user_metadata: { full_name: "Dev User" } };
-        document.addEventListener("DOMContentLoaded", () => bootApp(CURRENT_USER));
+        CURRENT_USER = {
+            email: useEmail,
+            user_metadata: { full_name: asEmail ? "(impersonating " + asEmail + ")" : "Dev User" }
+        };
+
+        // Floating badge so we never forget which client we're previewing
+        const badge = document.createElement("div");
+        badge.style.cssText = "position:fixed;bottom:10px;left:10px;z-index:9999;background:#D00000;color:#fff;font-size:11px;font-weight:700;padding:6px 10px;border-radius:6px;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.4);";
+        badge.innerHTML = (asEmail ? "👁 PREVIEWING " + asEmail : "🔧 LOCAL DEV · " + defaultEmail) +
+            ' <a href="?" style="color:#fff;text-decoration:underline;margin-left:6px;font-weight:400;">reset</a>';
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.appendChild(badge);
+            bootApp(CURRENT_USER);
+        });
     } else if (window.netlifyIdentity) {
         window.netlifyIdentity.on("init", user => {
             if (!user) {
@@ -97,6 +115,9 @@
             <a href="/trainers.html" class="hover:text-pump-red transition">TRAINERS</a>
             <a href="/workouts/" class="text-pump-red">WORKOUTS</a>
             <a href="/workouts/progress.html" class="hover:text-pump-red transition">PROGRESS</a>
+            <a href="/dashboard/" id="nav-dashboard-desktop" class="hidden hover:text-pump-red transition text-yellow-400">
+                <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+            </a>
             <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
         </div>
 
@@ -112,6 +133,9 @@
                 <a href="/trainers.html" class="block px-4 py-3 hover:text-pump-red transition">TRAINERS</a>
                 <a href="/workouts/" class="block px-4 py-3 text-pump-red">WORKOUTS</a>
                 <a href="/workouts/progress.html" class="block px-4 py-3 hover:text-pump-red transition">PROGRESS</a>
+                <a href="/dashboard/" id="nav-dashboard-mobile" class="hidden px-4 py-3 hover:text-pump-red transition text-yellow-400">
+                    <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+                </a>
                 <div class="border-t border-zinc-800"></div>
                 <button onclick="netlifyIdentity.logout()" class="block w-full text-left px-4 py-3 hover:text-pump-red transition">
                     LOG OUT
@@ -122,6 +146,26 @@
 </nav>
 
 <script>
+    // ── Trainer-only nav link ────────────────────────────────────────────
+    // Keep this list in sync with TRAINER_EMAILS in Code.gs. Client-side
+    // only hides/shows the link — the actual data access is gated by the
+    // server in Apps Script, so this is purely a UX cleanup.
+    const TRAINER_EMAILS_UI = ["edalopez90@gmail.com"];
+    function revealTrainerNav() {
+        const email = (CURRENT_USER && CURRENT_USER.email || "").toLowerCase();
+        if (!TRAINER_EMAILS_UI.includes(email)) return;
+        ["nav-dashboard-desktop","nav-dashboard-mobile"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove("hidden");
+        });
+    }
+    // Run after Netlify Identity (or local dev) sets CURRENT_USER.
+    // We poll briefly to handle both paths.
+    let _tries = 0;
+    const _poll = setInterval(() => {
+        if (CURRENT_USER || ++_tries > 40) { clearInterval(_poll); revealTrainerNav(); }
+    }, 100);
+
     // Hamburger toggle (runs as soon as nav exists in DOM)
     (function () {
         var btn = document.getElementById("mobileMenuBtn");

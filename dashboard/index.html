@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pump Nation | Coach Dashboard</title>
+
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#D00000">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pump-red': '#D00000',
+                        'pump-dark': '#121212',
+                        'pump-card': '#1E1E1E'
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; display: none; }
+        /* Email row only shows when its card is in the "revealed" state */
+        .client-card .client-email { display: none; }
+        .client-card.show-email .client-email { display: block; }
+        .client-card.show-email .reveal-btn .fa-eye { display: none; }
+        .client-card:not(.show-email) .reveal-btn .fa-eye-slash { display: none; }
+    </style>
+</head>
+
+<body class="bg-pump-dark text-gray-200">
+
+<script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
+    const SHARED_TOKEN    = "PumpNationNationLONZ";
+</script>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+    let CURRENT_USER = null;
+
+    const IS_LOCAL = location.hostname === "localhost" ||
+                     location.hostname === "127.0.0.1" ||
+                     location.protocol === "file:";
+
+    if (IS_LOCAL) {
+        document.body.style.display = "block";
+        CURRENT_USER = { email: "edalopez90@gmail.com", user_metadata: { full_name: "Edgar Lopez" } };
+        document.addEventListener("DOMContentLoaded", () => bootApp(CURRENT_USER));
+    } else if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+            if (!user) {
+                window.location.replace("/login.html");
+            } else {
+                CURRENT_USER = user;
+                document.body.style.display = "block";
+                bootApp(user);
+            }
+        });
+        window.netlifyIdentity.on("logout", () => window.location.replace("/login.html"));
+    }
+</script>
+
+
+<!-- NAV -->
+<nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+        <a href="/"><img src="/logo.png" class="h-10" alt="Pump Nation"></a>
+
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300 items-center">
+            <a href="/" class="hover:text-pump-red transition">HOME</a>
+            <a href="/workouts/" class="hover:text-pump-red transition">WORKOUTS</a>
+            <a href="/dashboard/" class="text-pump-red">DASHBOARD</a>
+            <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
+        </div>
+
+        <div class="md:hidden relative">
+            <button id="mobileMenuBtn" class="text-2xl text-gray-300" aria-label="Open menu">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div id="mobileMenu"
+                 class="hidden absolute right-0 mt-4 w-48 bg-pump-card border border-zinc-800 rounded-lg shadow-xl text-sm font-semibold text-gray-300 z-50">
+                <a href="/" class="block px-4 py-3 hover:text-pump-red">HOME</a>
+                <a href="/workouts/" class="block px-4 py-3 hover:text-pump-red">WORKOUTS</a>
+                <a href="/dashboard/" class="block px-4 py-3 text-pump-red">DASHBOARD</a>
+                <div class="border-t border-zinc-800"></div>
+                <button onclick="netlifyIdentity.logout()" class="block w-full text-left px-4 py-3 hover:text-pump-red">LOG OUT</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<!-- HERO + STATS -->
+<header class="pt-32 pb-6 px-4">
+    <div class="container mx-auto max-w-6xl flex flex-wrap items-baseline justify-between gap-3">
+        <div>
+            <h1 class="text-4xl md:text-5xl font-black uppercase italic text-white mb-1">Coach Dashboard</h1>
+            <p id="welcome-line" class="text-gray-400 text-sm">Loading…</p>
+        </div>
+        <label class="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400 cursor-pointer select-none">
+            <input id="reveal-all" type="checkbox" class="accent-pump-red">
+            Reveal emails
+        </label>
+    </div>
+</header>
+
+<section class="px-4 mb-8">
+    <div class="container mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Active Clients</p>
+            <p id="kpi-clients" class="text-3xl font-black text-white">—</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Needs Attention</p>
+            <p id="kpi-attention" class="text-3xl font-black text-pump-red">—</p>
+            <p class="text-[10px] text-gray-500 mt-1">idle 7+ days</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Sessions This Week</p>
+            <p id="kpi-weeksessions" class="text-3xl font-black text-white">—</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Total Volume</p>
+            <p id="kpi-volume" class="text-3xl font-black text-white">—</p>
+            <p class="text-[10px] text-gray-500 mt-1">across all clients</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- FILTER -->
+<section class="px-4 mb-4">
+    <div class="container mx-auto max-w-6xl flex flex-wrap gap-2 items-center">
+        <input id="search" type="search" placeholder="Filter by name…"
+               class="flex-1 min-w-[200px] bg-pump-card border border-zinc-700 rounded-lg px-4 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-pump-red">
+        <button data-filter="all"        class="filter-btn px-3 py-2 text-xs font-bold uppercase rounded-lg border border-zinc-700 text-gray-300">All</button>
+        <button data-filter="attention"  class="filter-btn px-3 py-2 text-xs font-bold uppercase rounded-lg border border-zinc-700 text-gray-300">Needs Attention</button>
+        <button data-filter="active"     class="filter-btn px-3 py-2 text-xs font-bold uppercase rounded-lg border border-zinc-700 text-gray-300">Active This Week</button>
+    </div>
+</section>
+
+
+<!-- CLIENT LIST -->
+<section class="px-4 pb-20">
+    <div class="container mx-auto max-w-6xl">
+        <div id="client-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <div id="loading-state" class="text-center text-gray-500 py-20">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pump-red mb-4"></i>
+            <p>Loading client data…</p>
+        </div>
+
+        <div id="error-state" class="hidden bg-pump-card border border-red-900 rounded-xl p-6 text-center max-w-2xl mx-auto">
+            <i class="fa-solid fa-triangle-exclamation text-2xl text-pump-red mb-3"></i>
+            <h3 class="text-xl font-bold text-white mb-2">Couldn't load the dashboard</h3>
+            <p id="error-msg" class="text-gray-400 text-sm"></p>
+        </div>
+
+        <div id="empty-state" class="hidden text-center text-gray-500 py-10 text-sm italic">
+            No clients match this filter.
+        </div>
+    </div>
+</section>
+
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" class="hidden fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-auto">
+    <div class="bg-pump-card border border-zinc-800 rounded-xl max-w-2xl w-full mt-12 p-6 relative">
+        <button id="detail-close" class="absolute top-4 right-4 text-gray-400 hover:text-pump-red text-xl"><i class="fa-solid fa-xmark"></i></button>
+        <div id="detail-body">Loading…</div>
+    </div>
+</div>
+
+
+<script>
+let OVERVIEW = null;
+let CURRENT_FILTER = "all";
+let SEARCH_TERM = "";
+
+async function bootApp(user) {
+    const email = (user.email || "").toLowerCase();
+    document.getElementById("welcome-line").textContent =
+        "Refreshed " + new Date().toLocaleString();
+
+    try {
+        const url = APPS_SCRIPT_URL +
+            "?token=" + encodeURIComponent(SHARED_TOKEN) +
+            "&action=trainer_overview" +
+            "&email=" + encodeURIComponent(email);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.error === "forbidden") return showError("You don't have coach access. Ask Edgar to add your email to TRAINER_EMAILS in Code.gs.");
+        if (data.error) throw new Error(data.error);
+        OVERVIEW = data;
+        renderKPIs();
+        renderClients();
+        document.getElementById("loading-state").classList.add("hidden");
+    } catch (err) {
+        showError(err.message || String(err));
+    }
+}
+
+function renderKPIs() {
+    const c = OVERVIEW.clients || [];
+    document.getElementById("kpi-clients").textContent = OVERVIEW.clientCount || 0;
+    document.getElementById("kpi-attention").textContent = OVERVIEW.needsAttention || 0;
+    const wk = c.reduce((s, x) => s + (x.sessionsThisWeek || 0), 0);
+    document.getElementById("kpi-weeksessions").textContent = wk;
+    const vol = c.reduce((s, x) => s + (x.totalVolume || 0), 0);
+    document.getElementById("kpi-volume").textContent = vol.toLocaleString("en-US");
+}
+
+// Mask "alice.smith@example.com" → "a******h@e****.com"
+function maskEmail(email) {
+    if (!email) return "";
+    const [local, domain] = String(email).split("@");
+    if (!domain) return email;
+    const maskPart = (s) => s.length <= 2 ? s[0] + "*" : s[0] + "*".repeat(Math.max(1, s.length - 2)) + s.slice(-1);
+    const domainParts = domain.split(".");
+    const maskedDomain = maskPart(domainParts[0]) + (domainParts.length > 1 ? "." + domainParts.slice(1).join(".") : "");
+    return maskPart(local) + "@" + maskedDomain;
+}
+
+function renderClients() {
+    const grid = document.getElementById("client-grid");
+    const empty = document.getElementById("empty-state");
+    const clients = (OVERVIEW.clients || []).filter(matchesFilter);
+    grid.innerHTML = "";
+    if (!clients.length) {
+        empty.classList.remove("hidden");
+        return;
+    }
+    empty.classList.add("hidden");
+
+    const revealAll = document.getElementById("reveal-all").checked;
+
+    clients.forEach(c => {
+        const idle = (c.daysSinceLast === null || c.daysSinceLast >= 7);
+        const idleLabel = c.daysSinceLast === null ? "no sessions yet" : `${c.daysSinceLast}d ago`;
+        const card = document.createElement("div");
+        card.className = "client-card bg-pump-card border rounded-xl p-5 transition hover:border-pump-red " +
+                         (idle ? "border-red-900" : "border-zinc-800") +
+                         (revealAll ? " show-email" : "");
+        card.dataset.email = c.email;
+
+        const initials = (c.name || c.email).split(/\s+/).map(w => w[0]).slice(0,2).join("").toUpperCase() || "?";
+
+        card.innerHTML = `
+            <div class="flex items-baseline justify-between mb-2">
+                <div class="flex items-center gap-2 truncate pr-2">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-zinc-800 text-pump-red text-xs font-bold">${escapeHtml(initials)}</span>
+                    <h3 class="text-lg font-bold text-white truncate">${escapeHtml(c.name || "Unnamed client")}</h3>
+                </div>
+                ${idle ? '<span class="text-[10px] uppercase font-bold text-pump-red whitespace-nowrap"><i class="fa-solid fa-circle-exclamation mr-1"></i>idle</span>' : '<span class="text-[10px] uppercase font-bold text-green-500 whitespace-nowrap"><i class="fa-solid fa-bolt mr-1"></i>active</span>'}
+            </div>
+
+            <p class="text-xs text-gray-500 truncate mb-1">${escapeHtml(c.program || "no program")}</p>
+
+            <!-- Hidden by default. Click the eye to reveal. -->
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                <button type="button" class="reveal-btn text-gray-500 hover:text-pump-red transition" title="Show / hide email">
+                    <i class="fa-solid fa-eye"></i><i class="fa-solid fa-eye-slash"></i>
+                </button>
+                <span class="email-mask">${escapeHtml(maskEmail(c.email))}</span>
+                <span class="client-email text-gray-400 truncate" style="display:none">${escapeHtml(c.email)}</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                <div><p class="text-[10px] uppercase text-gray-500">Sessions</p><p class="text-xl font-black text-white">${c.totalSessions || 0}</p></div>
+                <div><p class="text-[10px] uppercase text-gray-500">This Week</p><p class="text-xl font-black text-white">${c.sessionsThisWeek || 0}</p></div>
+                <div><p class="text-[10px] uppercase text-gray-500">Volume</p><p class="text-xl font-black text-white">${(c.totalVolume||0).toLocaleString("en-US")}</p></div>
+            </div>
+
+            <p class="text-xs text-gray-500 mb-1">Last: <span class="${idle ? 'text-pump-red' : 'text-gray-300'}">${idleLabel}</span></p>
+            ${c.topPRs && c.topPRs.length ? `<p class="text-xs text-gray-500 mb-3">Top PR: <span class="text-gray-300">${escapeHtml(c.topPRs[0].exercise)} ${c.topPRs[0].weight}</span></p>` : ''}
+
+            <div class="flex gap-2 mt-3">
+                <button type="button" data-action="quick"
+                        class="flex-1 text-[11px] uppercase font-bold tracking-wider border border-zinc-700 hover:border-pump-red text-gray-300 py-2 rounded-md transition">
+                    Quick View
+                </button>
+                <a href="/workouts/progress.html?client=${encodeURIComponent(c.email)}"
+                   class="flex-1 text-[11px] uppercase font-bold tracking-wider bg-pump-red hover:bg-red-700 text-white py-2 rounded-md transition text-center">
+                    Full Charts
+                </a>
+            </div>
+        `;
+
+        // Quick-view button
+        card.querySelector('[data-action="quick"]').addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            openDetail(c.email);
+        });
+        // Per-card reveal toggle
+        card.querySelector(".reveal-btn").addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            const showing = card.classList.toggle("show-email");
+            card.querySelector(".email-mask").style.display = showing ? "none" : "inline";
+            card.querySelector(".client-email").style.display = showing ? "inline" : "none";
+        });
+
+        grid.appendChild(card);
+    });
+}
+
+function matchesFilter(c) {
+    if (SEARCH_TERM) {
+        const t = SEARCH_TERM.toLowerCase();
+        // Search ONLY by name + program to avoid auto-revealing emails via search
+        if (!(c.name + " " + c.program).toLowerCase().includes(t)) return false;
+    }
+    if (CURRENT_FILTER === "attention") return c.daysSinceLast === null || c.daysSinceLast >= 7;
+    if (CURRENT_FILTER === "active")    return c.daysSinceLast !== null && c.daysSinceLast < 7;
+    return true;
+}
+
+// Filter buttons + search
+document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => {
+            b.classList.remove("bg-pump-red","text-white","border-pump-red");
+            b.classList.add("text-gray-300","border-zinc-700");
+        });
+        btn.classList.add("bg-pump-red","text-white","border-pump-red");
+        btn.classList.remove("text-gray-300","border-zinc-700");
+        CURRENT_FILTER = btn.dataset.filter;
+        renderClients();
+    });
+});
+document.querySelector('[data-filter="all"]').classList.add("bg-pump-red","text-white","border-pump-red");
+document.querySelector('[data-filter="all"]').classList.remove("text-gray-300","border-zinc-700");
+document.getElementById("search").addEventListener("input", e => {
+    SEARCH_TERM = e.target.value;
+    renderClients();
+});
+document.getElementById("reveal-all").addEventListener("change", () => renderClients());
+
+// Detail modal
+async function openDetail(email) {
+    document.getElementById("detail-modal").classList.remove("hidden");
+    const body = document.getElementById("detail-body");
+    body.innerHTML = '<p class="text-gray-400"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i>Loading…</p>';
+    try {
+        const url = APPS_SCRIPT_URL +
+            "?token=" + encodeURIComponent(SHARED_TOKEN) +
+            "&action=trainer_client_detail" +
+            "&email=" + encodeURIComponent((CURRENT_USER.email||"").toLowerCase()) +
+            "&target=" + encodeURIComponent(email);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const recent = (data.history || []).slice(0, 30);
+        body.innerHTML = `
+            <div class="flex flex-wrap items-baseline justify-between gap-3 mb-1">
+                <h2 class="text-2xl font-black text-white">${escapeHtml(data.client.Name || email)}</h2>
+                <a href="/workouts/progress.html?client=${encodeURIComponent(email)}"
+                   class="text-xs uppercase font-bold tracking-wider bg-pump-red hover:bg-red-700 text-white px-3 py-2 rounded-md transition">
+                    <i class="fa-solid fa-chart-line mr-1"></i> View Full Charts
+                </a>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">${escapeHtml(data.client.AssignedProgram || "")}</p>
+            <h3 class="text-xs uppercase tracking-wider text-gray-400 mb-2">Recent sets (latest 30)</h3>
+            <div class="text-sm space-y-1 max-h-80 overflow-y-auto pr-2">
+                ${recent.length ? recent.map(r => `
+                    <div class="border-b border-zinc-800/60 pb-1">
+                        <span class="text-gray-500 text-xs">${formatDate(r.Date)}</span>
+                        <span class="text-gray-200">${escapeHtml(r.Exercise || "")}</span>
+                        <span class="text-pump-red">${r.Reps || "-"} × ${r.Weight || "-"}</span>
+                        ${r.RPE ? `<span class="text-gray-500 text-xs">RPE ${r.RPE}</span>` : ""}
+                    </div>
+                `).join("") : '<p class="text-gray-500 italic">No sessions logged yet.</p>'}
+            </div>
+        `;
+    } catch (err) {
+        body.innerHTML = `<p class="text-pump-red">Couldn't load client: ${escapeHtml(err.message)}</p>`;
+    }
+}
+document.getElementById("detail-close").onclick = () => document.getElementById("detail-modal").classList.add("hidden");
+document.getElementById("detail-modal").addEventListener("click", e => {
+    if (e.target.id === "detail-modal") document.getElementById("detail-modal").classList.add("hidden");
+});
+
+// Hamburger
+(function () {
+    const btn = document.getElementById("mobileMenuBtn"), menu = document.getElementById("mobileMenu");
+    if (!btn || !menu) return;
+    btn.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("hidden"); });
+    menu.querySelectorAll("a, button").forEach(el => el.addEventListener("click", () => menu.classList.add("hidden")));
+    document.addEventListener("click", e => { if (!menu.contains(e.target) && e.target !== btn) menu.classList.add("hidden"); });
+})();
+
+function formatDate(v) {
+    if (!v) return "";
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    const s = String(v);
+    return s.includes("T") ? s.slice(0,10) : s;
+}
+function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function showError(msg) {
+    document.getElementById("loading-state").classList.add("hidden");
+    const box = document.getElementById("error-state");
+    box.classList.remove("hidden");
+    document.getElementById("error-msg").textContent = msg;
+}
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+</script>
+
+</body>
+</html>
