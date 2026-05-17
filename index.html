@@ -6,6 +6,20 @@
     <title>Pump Nation | Elevate Your Performance</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Required on every page so Netlify Identity can process confirmation
+         and password-reset tokens that land on the root URL. -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <script>
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", function(user) {
+                if (!user) {
+                    window.netlifyIdentity.on("login", function() {
+                        window.location.href = "/workouts/";
+                    });
+                }
+            });
+        }
+    </script>
     <script>
         tailwind.config = {
             theme: {
