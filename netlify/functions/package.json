@@ -1,0 +1,9 @@
+{
+  "name": "pumpnation-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for Pump Nation — mirrors Google Sheet writes to MongoDB Atlas.",
+  "type": "commonjs",
+  "dependencies": {
+    "mongodb": "^6.8.0"
+  }
+}

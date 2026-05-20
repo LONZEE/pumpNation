@@ -51,7 +51,7 @@
      ============================================================ -->
 <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
-    const SHARED_TOKEN    = "PumpNationNationLONZ";
+    const SHARED_TOKEN    = "pn-7xK9mR2vQ4wL8jT";
 </script>
 
 <!-- Netlify Identity (member auth) -->
@@ -115,6 +115,7 @@
             <a href="/trainers.html" class="hover:text-pump-red transition">TRAINERS</a>
             <a href="/workouts/" class="text-pump-red">WORKOUTS</a>
             <a href="/workouts/progress.html" class="hover:text-pump-red transition">PROGRESS</a>
+            <a href="/cardio/" class="hover:text-pump-red transition">CARDIO</a>
             <a href="/dashboard/" id="nav-dashboard-desktop" class="hidden hover:text-pump-red transition text-yellow-400">
                 <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
             </a>
@@ -133,6 +134,7 @@
                 <a href="/trainers.html" class="block px-4 py-3 hover:text-pump-red transition">TRAINERS</a>
                 <a href="/workouts/" class="block px-4 py-3 text-pump-red">WORKOUTS</a>
                 <a href="/workouts/progress.html" class="block px-4 py-3 hover:text-pump-red transition">PROGRESS</a>
+                <a href="/cardio/" class="block px-4 py-3 hover:text-pump-red transition">CARDIO</a>
                 <a href="/dashboard/" id="nav-dashboard-mobile" class="hidden px-4 py-3 hover:text-pump-red transition text-yellow-400">
                     <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
                 </a>
@@ -415,9 +417,31 @@ function renderDay(day) {
     `;
 
     document.getElementById("log-form").addEventListener("submit", onSave);
+    // Live pace recompute on each cardio block
+    document.querySelectorAll('.exercise[data-mode="cardio"]').forEach(block => {
+        const distEl = block.querySelector('input[name="distance"]');
+        const durEl  = block.querySelector('input[name="duration"]');
+        if (distEl) distEl.addEventListener("input", () => recomputePace(block));
+        if (durEl)  durEl.addEventListener("input", () => recomputePace(block));
+    });
+    attachDraftHandlers();
+    const restoredAt = loadDraft();
+    if (restoredAt) {
+        // After restoring values, refresh any cardio pace displays
+        document.querySelectorAll('.exercise[data-mode="cardio"]').forEach(recomputePace);
+        const minsAgo = Math.max(1, Math.round((Date.now() - restoredAt) / 60000));
+        showToast(`Draft restored from ${minsAgo} min ago`);
+    }
+}
+
+function isCardio(typeField) {
+    const t = String(typeField || "").trim().toLowerCase();
+    return ["cardio","run","running","bike","biking","cycle","cycling","row","rowing","swim","swimming","walk","walking","hike","hiking","elliptical"].includes(t);
 }
 
 function exerciseBlock(r, idx) {
+    if (isCardio(r.Type)) return cardioBlock(r, idx);
+
     const setCount = parseInt(r.TargetSets, 10) || 1;
     const setsHtml = [];
     for (let s = 1; s <= setCount; s++) {
@@ -431,7 +455,7 @@ function exerciseBlock(r, idx) {
         `);
     }
     return `
-        <div class="exercise border border-zinc-800 rounded-lg p-4" data-exercise="${escapeHtml(r.Exercise)}">
+        <div class="exercise border border-zinc-800 rounded-lg p-4" data-exercise="${escapeHtml(r.Exercise)}" data-mode="strength">
             <div class="flex flex-wrap items-baseline justify-between mb-3">
                 <h3 class="text-lg font-bold text-white">${escapeHtml(r.Exercise)}</h3>
                 <span class="text-xs text-pump-red font-semibold">${r.TargetSets} × ${escapeHtml(String(r.TargetReps || ""))} ${r.TargetWeight ? "@ " + escapeHtml(String(r.TargetWeight)) : ""}</span>
@@ -441,6 +465,97 @@ function exerciseBlock(r, idx) {
             <input name="ex-notes" placeholder="Notes (optional)" class="mt-3 w-full bg-pump-dark border border-zinc-700 rounded px-3 py-2 text-sm text-gray-300">
         </div>
     `;
+}
+
+function cardioBlock(r, idx) {
+    // Programs can specify a default cardio modality in the Type column,
+    // or the client picks from the dropdown when logging.
+    const programType = String(r.Type || "").trim().toLowerCase();
+    const types = ["run","bike","row","swim","walk","hike","elliptical","other"];
+    const defaultType = types.includes(programType) ? programType : "run";
+
+    const target = `${escapeHtml(String(r.TargetReps || ""))}${r.TargetWeight ? " @ " + escapeHtml(String(r.TargetWeight)) : ""}`;
+
+    return `
+        <div class="exercise border border-zinc-800 rounded-lg p-4 bg-gradient-to-br from-transparent to-blue-950/20"
+             data-exercise="${escapeHtml(r.Exercise)}" data-mode="cardio">
+            <div class="flex flex-wrap items-baseline justify-between mb-3">
+                <h3 class="text-lg font-bold text-white">
+                    <i class="fa-solid fa-heart-pulse text-blue-500 mr-2"></i>${escapeHtml(r.Exercise)}
+                </h3>
+                <span class="text-xs text-blue-400 font-semibold uppercase">Cardio${target ? " · " + target : ""}</span>
+            </div>
+            ${r.Notes ? `<p class="text-xs text-gray-500 italic mb-3">${escapeHtml(String(r.Notes))}</p>` : ""}
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2" data-set="1">
+                <label class="block">
+                    <span class="text-[10px] uppercase text-gray-500">Type</span>
+                    <select name="cardio-type" class="w-full bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-white text-sm">
+                        ${types.map(t => `<option value="${t}"${t===defaultType?" selected":""}>${t}</option>`).join("")}
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="text-[10px] uppercase text-gray-500">Distance (mi)</span>
+                    <input name="distance" type="number" step="0.01" inputmode="decimal" placeholder="3.10"
+                           class="w-full bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+                </label>
+                <label class="block">
+                    <span class="text-[10px] uppercase text-gray-500">Duration</span>
+                    <input name="duration" type="text" inputmode="numeric" placeholder="MM:SS"
+                           pattern="^\\d{1,2}:\\d{2}(:\\d{2})?$"
+                           class="w-full bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+                </label>
+                <label class="block">
+                    <span class="text-[10px] uppercase text-gray-500">Calories</span>
+                    <input name="calories" type="number" step="1" inputmode="numeric" placeholder="320"
+                           class="w-full bg-pump-dark border border-zinc-700 rounded px-2 py-2 text-center text-white">
+                </label>
+            </div>
+
+            <p class="text-xs text-gray-400 mt-3">
+                <i class="fa-solid fa-stopwatch text-blue-500 mr-1"></i>
+                Pace: <span name="pace-display" class="text-blue-400 font-semibold">—</span>
+            </p>
+
+            <input name="ex-notes" placeholder="Notes (optional)" class="mt-3 w-full bg-pump-dark border border-zinc-700 rounded px-3 py-2 text-sm text-gray-300">
+        </div>
+    `;
+}
+
+// Pace = duration / distance. Recompute live on input change.
+function recomputePace(block) {
+    const distEl = block.querySelector('input[name="distance"]');
+    const durEl  = block.querySelector('input[name="duration"]');
+    const display = block.querySelector('[name="pace-display"]');
+    if (!distEl || !durEl || !display) return;
+
+    const dist = parseFloat(distEl.value) || 0;
+    const dur  = parseDurationToSeconds(durEl.value);
+    if (dist <= 0 || dur <= 0) { display.textContent = "—"; return; }
+
+    const secsPerMi = dur / dist;
+    const m = Math.floor(secsPerMi / 60);
+    const s = Math.round(secsPerMi % 60);
+    display.textContent = `${m}:${String(s).padStart(2,"0")}/mi`;
+}
+
+function parseDurationToSeconds(s) {
+    if (!s) return 0;
+    const parts = String(s).trim().split(":").map(p => parseInt(p, 10) || 0);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    if (parts.length === 1) return parts[0]; // raw seconds fallback
+    return 0;
+}
+
+function formatPace(distance, duration) {
+    const d = parseFloat(distance) || 0;
+    const dur = parseDurationToSeconds(duration);
+    if (d <= 0 || dur <= 0) return "";
+    const secsPerMi = dur / d;
+    const m = Math.floor(secsPerMi / 60);
+    const s = Math.round(secsPerMi % 60);
+    return `${m}:${String(s).padStart(2,"0")}/mi`;
 }
 
 async function onSave(e) {
@@ -453,21 +568,44 @@ async function onSave(e) {
     const entries = [];
     document.querySelectorAll(".exercise").forEach(block => {
         const exercise = block.dataset.exercise;
-        const exNotes  = block.querySelector('input[name="ex-notes"]').value;
-        block.querySelectorAll("[data-set]").forEach(setRow => {
-            const reps   = setRow.querySelector('input[name="reps"]').value;
-            const weight = setRow.querySelector('input[name="weight"]').value;
-            const rpe    = setRow.querySelector('input[name="rpe"]').value;
-            if (!reps && !weight && !rpe) return; // skip blank sets
+        const mode = block.dataset.mode || "strength";
+        const exNotes = (block.querySelector('input[name="ex-notes"]') || {}).value || "";
+
+        if (mode === "cardio") {
+            const row = block.querySelector("[data-set]");
+            if (!row) return;
+            const type     = (row.querySelector('select[name="cardio-type"]') || {}).value || "";
+            const distance = (row.querySelector('input[name="distance"]')     || {}).value || "";
+            const duration = (row.querySelector('input[name="duration"]')     || {}).value || "";
+            const calories = (row.querySelector('input[name="calories"]')     || {}).value || "";
+            // Skip if completely empty
+            if (!distance && !duration && !calories) return;
             entries.push({
                 exercise: exercise,
-                setNumber: setRow.dataset.set,
-                reps: reps,
-                weight: weight,
-                rpe: rpe,
-                notes: exNotes
+                setNumber: 1,
+                notes: exNotes,
+                type: type,
+                distance: distance,
+                duration: duration,
+                pace: formatPace(distance, duration),
+                calories: calories
             });
-        });
+        } else {
+            block.querySelectorAll("[data-set]").forEach(setRow => {
+                const reps   = (setRow.querySelector('input[name="reps"]')   || {}).value || "";
+                const weight = (setRow.querySelector('input[name="weight"]') || {}).value || "";
+                const rpe    = (setRow.querySelector('input[name="rpe"]')    || {}).value || "";
+                if (!reps && !weight && !rpe) return; // skip blank sets
+                entries.push({
+                    exercise: exercise,
+                    setNumber: setRow.dataset.set,
+                    reps: reps,
+                    weight: weight,
+                    rpe: rpe,
+                    notes: exNotes
+                });
+            });
+        }
     });
 
     if (!entries.length) {
@@ -494,6 +632,7 @@ async function onSave(e) {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
+        clearDraft();
         showToast(`Saved ${data.written} sets`);
         // refresh history from server
         const refreshed = await fetch(APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((CURRENT_USER.email||"").toLowerCase()));
@@ -760,6 +899,159 @@ function showToast(msg) {
     t.classList.remove("hidden");
     setTimeout(() => t.classList.add("hidden"), 2500);
 }
+
+// ── DRAFT AUTO-SAVE ───────────────────────────────────────────────────────
+// Saves form input to localStorage on every keystroke (debounced 500ms) and
+// forces an immediate save when the browser hides the tab (phone locked,
+// app switched, incoming call). On page reload / day switch the draft is
+// restored. Cleared after a successful Save Workout.
+
+function draftKey() {
+    const email   = (CURRENT_USER && CURRENT_USER.email || "anon").toLowerCase();
+    const program = (CLIENT && CLIENT.AssignedProgram) || "_";
+    return `pump-draft:${email}:${program}:${ACTIVE_DAY || "_"}`;
+}
+
+function saveDraft() {
+    if (!ACTIVE_DAY) return;
+    const form = document.getElementById("log-form");
+    if (!form) return;
+
+    const draft = {
+        savedAt: Date.now(),
+        sessionDate: (document.getElementById("session-date") || {}).value || "",
+        exercises: []
+    };
+
+    form.querySelectorAll(".exercise").forEach(block => {
+        const mode = block.dataset.mode || "strength";
+        const ex = {
+            exercise: block.dataset.exercise,
+            mode: mode,
+            notes: (block.querySelector('input[name="ex-notes"]') || {}).value || "",
+            sets: []
+        };
+
+        if (mode === "cardio") {
+            const row = block.querySelector("[data-set]");
+            if (row) {
+                ex.sets.push({
+                    set: "1",
+                    type:     (row.querySelector('select[name="cardio-type"]') || {}).value || "",
+                    distance: (row.querySelector('input[name="distance"]')     || {}).value || "",
+                    duration: (row.querySelector('input[name="duration"]')     || {}).value || "",
+                    calories: (row.querySelector('input[name="calories"]')     || {}).value || ""
+                });
+            }
+        } else {
+            block.querySelectorAll("[data-set]").forEach(setRow => {
+                ex.sets.push({
+                    set: setRow.dataset.set,
+                    reps:   (setRow.querySelector('input[name="reps"]')   || {}).value || "",
+                    weight: (setRow.querySelector('input[name="weight"]') || {}).value || "",
+                    rpe:    (setRow.querySelector('input[name="rpe"]')    || {}).value || ""
+                });
+            });
+        }
+
+        draft.exercises.push(ex);
+    });
+
+    // Skip saving if nothing has been entered — keeps localStorage clean
+    const hasData = draft.exercises.some(ex =>
+        ex.notes || ex.sets.some(s => s.reps || s.weight || s.rpe || s.distance || s.duration || s.calories)
+    );
+
+    try {
+        if (hasData) localStorage.setItem(draftKey(), JSON.stringify(draft));
+        else         localStorage.removeItem(draftKey());
+    } catch (e) {
+        // Storage quota exceeded / disabled — fail quietly
+    }
+}
+
+function loadDraft() {
+    if (!ACTIVE_DAY) return 0;
+    try {
+        const raw = localStorage.getItem(draftKey());
+        if (!raw) return 0;
+        const draft = JSON.parse(raw);
+        if (!draft || !Array.isArray(draft.exercises)) return 0;
+
+        if (draft.sessionDate) {
+            const dateInput = document.getElementById("session-date");
+            if (dateInput) dateInput.value = draft.sessionDate;
+        }
+
+        document.querySelectorAll(".exercise").forEach(block => {
+            const ex = draft.exercises.find(e => e.exercise === block.dataset.exercise);
+            if (!ex) return;
+            const mode = block.dataset.mode || "strength";
+            const notesInput = block.querySelector('input[name="ex-notes"]');
+            if (notesInput) notesInput.value = ex.notes || "";
+
+            if (mode === "cardio") {
+                const row = block.querySelector("[data-set]");
+                const sd = ex.sets && ex.sets[0];
+                if (!row || !sd) return;
+                const typeSel = row.querySelector('select[name="cardio-type"]');
+                if (typeSel && sd.type) typeSel.value = sd.type;
+                ["distance","duration","calories"].forEach(field => {
+                    const input = row.querySelector(`input[name="${field}"]`);
+                    if (input) input.value = sd[field] || "";
+                });
+            } else {
+                block.querySelectorAll("[data-set]").forEach(setRow => {
+                    const sd = ex.sets.find(s => s.set === setRow.dataset.set);
+                    if (!sd) return;
+                    ["reps","weight","rpe"].forEach(field => {
+                        const input = setRow.querySelector(`input[name="${field}"]`);
+                        if (input) input.value = sd[field] || "";
+                    });
+                });
+            }
+        });
+
+        return draft.savedAt || 1;
+    } catch (e) {
+        return 0;
+    }
+}
+
+function clearDraft() {
+    try { localStorage.removeItem(draftKey()); } catch (e) {}
+}
+
+let _saveDraftTimer = null;
+function scheduleDraftSave() {
+    clearTimeout(_saveDraftTimer);
+    _saveDraftTimer = setTimeout(saveDraft, 500);
+}
+
+function attachDraftHandlers() {
+    const form = document.getElementById("log-form");
+    if (!form) return;
+    // Save shortly after each input change (debounced)
+    form.addEventListener("input", scheduleDraftSave);
+    // Also save the moment the session date changes
+    const dateInput = document.getElementById("session-date");
+    if (dateInput) dateInput.addEventListener("change", saveDraft);
+}
+
+// Global "save right now" hooks — registered ONCE so we don't pile up listeners.
+// These catch the phone locking, app switching, tab being closed, etc.
+(function () {
+    if (window.__pumpDraftBound) return;
+    window.__pumpDraftBound = true;
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") saveDraft();
+    });
+    window.addEventListener("pagehide", saveDraft);
+    window.addEventListener("beforeunload", saveDraft);
+    // Belt-and-suspenders: save every 30s while page is open with input
+    setInterval(saveDraft, 30000);
+})();
+
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));

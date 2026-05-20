@@ -34,7 +34,7 @@
 
 <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
-    const SHARED_TOKEN    = "PumpNationNationLONZ";
+    const SHARED_TOKEN    = "pn-7xK9mR2vQ4wL8jT";
 </script>
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
@@ -90,6 +90,7 @@
             <a href="/" class="hover:text-pump-red transition">HOME</a>
             <a href="/workouts/" class="hover:text-pump-red transition">WORKOUTS</a>
             <a href="/workouts/progress.html" class="text-pump-red">PROGRESS</a>
+            <a href="/cardio/" class="hover:text-pump-red transition">CARDIO</a>
             <a href="/dashboard/" id="nav-dashboard-desktop" class="hidden hover:text-pump-red transition text-yellow-400">
                 <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
             </a>
@@ -101,6 +102,7 @@
                 <a href="/" class="block px-4 py-3 hover:text-pump-red">HOME</a>
                 <a href="/workouts/" class="block px-4 py-3 hover:text-pump-red">WORKOUTS</a>
                 <a href="/workouts/progress.html" class="block px-4 py-3 text-pump-red">PROGRESS</a>
+                <a href="/cardio/" class="block px-4 py-3 hover:text-pump-red transition">CARDIO</a>
                 <a href="/dashboard/" id="nav-dashboard-mobile" class="hidden px-4 py-3 hover:text-pump-red transition text-yellow-400">
                     <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
                 </a>
@@ -174,6 +176,32 @@
             <i class="fa-solid fa-chart-column text-pump-red mr-2"></i> Weekly volume · last 12 weeks
         </h2>
         <svg id="volume-chart" viewBox="0 0 600 220" class="w-full h-48"></svg>
+    </div>
+</section>
+
+
+<!-- Weekly cardio miles (only shows if there's cardio history) -->
+<section id="cardio-miles-section" class="hidden px-4 mb-8">
+    <div class="container mx-auto max-w-5xl bg-pump-card border border-zinc-800 rounded-xl p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-white mb-3">
+            <i class="fa-solid fa-person-running text-blue-500 mr-2"></i> Weekly cardio miles · last 12 weeks
+        </h2>
+        <svg id="cardio-miles-chart" viewBox="0 0 600 220" class="w-full h-48"></svg>
+    </div>
+</section>
+
+
+<!-- Pace over time -->
+<section id="pace-section" class="hidden px-4 mb-8">
+    <div class="container mx-auto max-w-5xl bg-pump-card border border-zinc-800 rounded-xl p-5">
+        <div class="flex flex-wrap items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">
+                <i class="fa-solid fa-stopwatch text-blue-500 mr-2"></i> Pace over time
+            </h2>
+            <select id="pace-type" class="bg-pump-dark border border-zinc-700 rounded text-xs text-gray-300 px-2 py-1"></select>
+        </div>
+        <svg id="pace-chart" viewBox="0 0 600 220" class="w-full h-48"></svg>
+        <p class="text-[11px] text-gray-500 mt-2">Lower = faster. Plotted as minutes per mile per session.</p>
     </div>
 </section>
 
@@ -281,8 +309,15 @@ function renderAll() {
         date: parseDateISO(r.Date) || parseDateISO(r.Timestamp),
         exercise: String(r.Exercise || "").trim(),
         reps: parseFloat(r.Reps) || 0,
-        weight: parseFloat(String(r.Weight).replace(/[^\d.]/g, "")) || 0
+        weight: parseFloat(String(r.Weight).replace(/[^\d.]/g, "")) || 0,
+        type: String(r.Type || "").trim().toLowerCase(),
+        distance: parseFloat(String(r.Distance || "").replace(/[^\d.]/g, "")) || 0,
+        durationSec: parseDurationToSecs(r.Duration),
+        calories: parseFloat(r.Calories) || 0
     })).filter(r => r.date);
+
+    // Split cardio rows out — they live in the same Logs but are visualized separately
+    const cardioRows = rows.filter(r => r.distance > 0 || r.durationSec > 0);
 
     // KPIs
     const sessionDates = new Set(rows.map(r => r.date));
@@ -296,14 +331,141 @@ function renderAll() {
     document.getElementById("kpi-volume").textContent = Math.round(totalVol).toLocaleString("en-US");
     document.getElementById("kpi-streak").textContent = computeWeeklyStreak(sessionDates);
 
-    // Heatmap
+    // Heatmap (counts every logged row — cardio + strength)
     renderHeatmap(rows);
 
-    // Weekly volume bar chart
-    renderWeeklyVolume(rows);
+    // Weekly volume bar chart (strength reps × weight only)
+    renderWeeklyVolume(rows.filter(r => r.weight > 0));
 
-    // Compare-two-lifts
-    setupCompare(rows);
+    // Compare-two-lifts (strength)
+    setupCompare(rows.filter(r => r.weight > 0));
+
+    // Cardio sections
+    if (cardioRows.length) {
+        document.getElementById("cardio-miles-section").classList.remove("hidden");
+        renderCardioMiles(cardioRows);
+
+        document.getElementById("pace-section").classList.remove("hidden");
+        setupPaceChart(cardioRows);
+    }
+}
+
+
+function renderCardioMiles(cardio) {
+    const buckets = {};
+    cardio.forEach(r => {
+        const wk = weekStartDate(new Date(r.date));
+        buckets[wk] = (buckets[wk] || 0) + r.distance;
+    });
+    const weeks = [];
+    const cur = startOfWeek(new Date());
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(cur); d.setDate(d.getDate() - i*7);
+        const key = d.toISOString().slice(0,10);
+        weeks.push({ key, label: shortDate(d), miles: buckets[key] || 0 });
+    }
+    const max = Math.max(1, ...weeks.map(w => w.miles));
+
+    const W = 600, H = 220, pad = 30;
+    const barW = (W - pad*2) / weeks.length;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.getElementById("cardio-miles-chart");
+    svg.innerHTML = "";
+
+    weeks.forEach((wk, i) => {
+        const barH = (wk.miles / max) * (H - pad*2);
+        const x = pad + i * barW;
+        const y = H - pad - barH;
+
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", x + 3); rect.setAttribute("y", y);
+        rect.setAttribute("width", Math.max(2, barW - 6));
+        rect.setAttribute("height", barH);
+        rect.setAttribute("fill", wk.miles > 0 ? "#3b82f6" : "#2a2a2a");
+        rect.setAttribute("rx", "2");
+        svg.appendChild(rect);
+
+        if (i % 2 === 0) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", x + barW/2); t.setAttribute("y", H - 10);
+            t.setAttribute("fill", "#666"); t.setAttribute("font-size", "9");
+            t.setAttribute("text-anchor", "middle");
+            t.textContent = wk.label;
+            svg.appendChild(t);
+        }
+        if (wk.miles > 0) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", x + barW/2); t.setAttribute("y", y - 4);
+            t.setAttribute("fill", "#bbb"); t.setAttribute("font-size", "9");
+            t.setAttribute("text-anchor", "middle");
+            t.textContent = (Math.round(wk.miles*10)/10).toFixed(1);
+            svg.appendChild(t);
+        }
+    });
+}
+
+
+function setupPaceChart(cardio) {
+    const types = [...new Set(cardio.map(r => r.type || "run").filter(Boolean))].sort();
+    const sel = document.getElementById("pace-type");
+    sel.innerHTML = types.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
+    const draw = () => drawPaceChart(sel.value, cardio);
+    sel.onchange = draw;
+    draw();
+}
+
+function drawPaceChart(type, cardio) {
+    const svg = document.getElementById("pace-chart");
+    svg.innerHTML = "";
+    const ns = "http://www.w3.org/2000/svg";
+    const W = 600, H = 220, pad = 30;
+
+    // Points = avg pace (sec/mi) per session of this type
+    const rows = cardio.filter(r => (r.type || "run") === type && r.distance > 0 && r.durationSec > 0);
+    const points = rows.map(r => ({ d: new Date(r.date), p: r.durationSec / r.distance })).sort((a,b) => a.d - b.d);
+    if (points.length < 2) return;
+
+    const xs = points.map(p => p.d.getTime());
+    const ys = points.map(p => p.p);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const yPad = (yMax - yMin) * 0.1 || 1;
+    const yLo = yMin - yPad, yHi = yMax + yPad;
+
+    const px = t => pad + ((t - xMin) / (xMax - xMin || 1)) * (W - pad*2);
+    const py = v => H - pad - ((v - yLo) / (yHi - yLo)) * (H - pad*2);
+
+    const d = "M " + points.map(p => `${px(p.d.getTime())},${py(p.p)}`).join(" L ");
+    const line = document.createElementNS(ns, "path");
+    line.setAttribute("d", d); line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "#3b82f6"); line.setAttribute("stroke-width", "2");
+    svg.appendChild(line);
+
+    points.forEach((p, i) => {
+        const c = document.createElementNS(ns, "circle");
+        c.setAttribute("cx", px(p.d.getTime())); c.setAttribute("cy", py(p.p));
+        c.setAttribute("r", "3"); c.setAttribute("fill", "#fff");
+        c.setAttribute("stroke", "#3b82f6"); c.setAttribute("stroke-width", "1.5");
+        svg.appendChild(c);
+        if (i === 0 || i === points.length - 1) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", px(p.d.getTime())); t.setAttribute("y", py(p.p) - 8);
+            t.setAttribute("fill", "#aaa"); t.setAttribute("font-size", "10");
+            t.setAttribute("text-anchor", "middle");
+            const m = Math.floor(p.p / 60), s = Math.round(p.p % 60);
+            t.textContent = `${m}:${String(s).padStart(2,"0")}/mi`;
+            svg.appendChild(t);
+        }
+    });
+}
+
+function parseDurationToSecs(s) {
+    if (!s) return 0;
+    const str = String(s).trim();
+    const parts = str.split(":").map(p => parseInt(p, 10) || 0);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return parseInt(str, 10) || 0;
 }
 
 

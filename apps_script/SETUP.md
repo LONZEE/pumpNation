@@ -19,8 +19,22 @@ Total setup time: about 15 minutes.
 The sheet has three tabs:
 
 - **Clients** — one row per client. Columns: Email, Name, AssignedProgram, StartDate, Active.
-- **Programs** — your weekly workouts. Columns: ProgramName, Day, Focus, Exercise, TargetSets, TargetReps, TargetWeight, Notes.
+- **Programs** — your weekly workouts. Columns: ProgramName, Day, Focus, Exercise, TargetSets, TargetReps, TargetWeight, Notes, **Type** (optional — leave blank for strength, set to `cardio` / `run` / `bike` / `row` / `swim` / `walk` / `hike` / `elliptical` for cardio rows).
 - **Logs** — leave this empty. Clients' saved workouts append here automatically.
+
+### Strength vs. cardio rows
+
+For a regular lift, leave the `Type` column blank or set it to `strength`. Use `TargetSets`, `TargetReps`, `TargetWeight` as before.
+
+For a cardio session, set `Type` to one of: `cardio`, `run`, `bike`, `row`, `swim`, `walk`, `hike`, `elliptical`. The workout page detects this and shows distance/duration/calories inputs instead of reps/weight/RPE. `TargetReps` and `TargetWeight` become guidance text (e.g., `5 mi @ easy pace`).
+
+Example Programs rows:
+
+| ProgramName | Day | Focus | Exercise | TargetSets | TargetReps | TargetWeight | Notes | Type |
+|---|---|---|---|---|---|---|---|---|
+| Foundations | Monday | Strength | Back Squat | 5 | 5 | 225 lb | Heavy 5 | |
+| Foundations | Tuesday | Easy Run | Morning Jog | 1 | 3 mi | easy pace | Zone 2 | run |
+| Foundations | Friday | Conditioning | Row | 1 | 2000m | hard | All-out | row |
 
 ---
 

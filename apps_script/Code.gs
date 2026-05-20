@@ -21,13 +21,20 @@
  */
 
 // ---- CONFIG --------------------------------------------------------------
-var SHARED_SECRET = "PumpNationNationLONZ"; // must match the token in index.html
+var SHARED_SECRET = "pn-7xK9mR2vQ4wL8jT"; // must match the token in index.html
 var SHEET_CLIENTS  = "Clients";
 var SHEET_PROGRAMS = "Programs";
 var SHEET_LOGS     = "Logs";
 
 // Emails allowed to hit the trainer-overview endpoint. Add other coaches here.
 var TRAINER_EMAILS = ["edalopez90@gmail.com"];
+
+// ─── MongoDB mirror (optional) ────────────────────────────────────────────
+// Paste your Netlify Function URL here once the site is deployed, e.g.
+//   "https://yoursite.netlify.app/.netlify/functions/mirror"
+// Leave blank ("") to disable mirroring entirely — sheet writes still work.
+var MIRROR_ENDPOINT = "";
+var MIRROR_SECRET   = "CHANGE-ME-mongo-mirror";  // must match MIRROR_SECRET in Netlify env vars
 // --------------------------------------------------------------------------
 
 
@@ -128,11 +135,27 @@ function doPost(e) {
         en.reps || "",
         en.weight || "",
         en.rpe || "",
-        en.notes || ""
+        en.notes || "",
+        en.type || "",         // cardio modality: run / bike / row / etc., or "" for strength
+        en.distance || "",     // cardio distance (mi or km)
+        en.duration || "",     // cardio duration (mm:ss or hh:mm:ss)
+        en.pace || "",         // auto-calculated pace string e.g. "8:00/mi"
+        en.calories || ""      // cardio calories
       ];
     });
 
     sh.getRange(sh.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+
+    // Mirror to MongoDB (silent fail — never break the client's save)
+    _mirrorToMongo("logs_bulk", rows.map(function (r) {
+      return {
+        Timestamp: r[0], ClientEmail: r[1], ClientName: r[2], Date: r[3],
+        ProgramName: r[4], Day: r[5], Exercise: r[6], SetNumber: r[7],
+        Reps: r[8], Weight: r[9], RPE: r[10], Notes: r[11],
+        Type: r[12], Distance: r[13], Duration: r[14], Pace: r[15], Calories: r[16]
+      };
+    }));
+
     return _json({ ok: true, written: rows.length });
   } catch (err) {
     return _json({ error: String(err) }, 500);
@@ -212,7 +235,8 @@ function _getProgram(ss, programName) {
     TargetSets:   ["TargetSets", "Sets", "Target Sets"],
     TargetReps:   ["TargetReps", "Reps", "Target Reps"],
     TargetWeight: ["TargetWeight", "Weight", "Target Weight"],
-    Notes:        ["Notes", "Note"]
+    Notes:        ["Notes", "Note"],
+    Type:         ["Type", "Modality", "Category"]   // "cardio" / "strength" / "" (default strength)
   };
 
   var wanted = _norm(programName);
@@ -246,7 +270,12 @@ function _getRecentLogs(ss, email, limit) {
     Reps:         ["Reps"],
     Weight:       ["Weight"],
     RPE:          ["RPE"],
-    Notes:        ["Notes"]
+    Notes:        ["Notes"],
+    Type:         ["Type", "Modality"],
+    Distance:     ["Distance"],
+    Duration:     ["Duration"],
+    Pace:         ["Pace"],
+    Calories:     ["Calories", "Cal"]
   };
 
   var rows = [];
@@ -261,7 +290,7 @@ function _getRecentLogs(ss, email, limit) {
 // Make sure the Logs tab exists with the right headers; create it if missing.
 function _getOrCreateLogsSheet(ss) {
   var sh = ss.getSheetByName(SHEET_LOGS);
-  var headers = ["Timestamp","ClientEmail","ClientName","Date","ProgramName","Day","Exercise","SetNumber","Reps","Weight","RPE","Notes"];
+  var headers = ["Timestamp","ClientEmail","ClientName","Date","ProgramName","Day","Exercise","SetNumber","Reps","Weight","RPE","Notes","Type","Distance","Duration","Pace","Calories"];
   if (!sh) {
     sh = ss.insertSheet(SHEET_LOGS);
     sh.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -289,6 +318,74 @@ function _today() {
   return d.getFullYear() + "-" + mm + "-" + dd;
 }
 
+
+// ─── MongoDB mirror helpers ──────────────────────────────────────────────
+// Fire-and-forget POST to the Netlify Function. Never throws — any error
+// is just logged so the original sheet write still returns success.
+function _mirrorToMongo(type, data) {
+  if (!MIRROR_ENDPOINT) return;        // mirroring disabled
+  try {
+    var res = UrlFetchApp.fetch(MIRROR_ENDPOINT, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify({ token: MIRROR_SECRET, type: type, data: data }),
+      muteHttpExceptions: true
+    });
+    var code = res.getResponseCode();
+    if (code < 200 || code >= 300) {
+      Logger.log("Mirror " + type + " returned " + code + ": " + res.getContentText());
+    }
+  } catch (err) {
+    Logger.log("Mirror " + type + " failed: " + err);
+  }
+}
+
+
+// Snapshot the Clients + Programs tabs into MongoDB. Run this manually from
+// the Apps Script editor whenever you update those tabs, OR set up a
+// time-based trigger (e.g. daily) under Triggers in the Apps Script UI.
+function mirrorSheetSnapshot() {
+  var ss = SpreadsheetApp.getActive();
+  var totals = { clients: 0, programs: 0 };
+
+  // ── Clients ──
+  var csh = ss.getSheetByName(SHEET_CLIENTS);
+  if (csh) {
+    var cvals = csh.getDataRange().getValues();
+    if (cvals.length >= 2) {
+      var cHeaders = cvals[0];
+      var clients = [];
+      for (var i = 1; i < cvals.length; i++) {
+        var obj = {};
+        for (var j = 0; j < cHeaders.length; j++) obj[String(cHeaders[j])] = cvals[i][j];
+        if (obj.Email || obj.email) clients.push(obj);
+      }
+      _mirrorToMongo("clients_snapshot", clients);
+      totals.clients = clients.length;
+    }
+  }
+
+  // ── Programs ──
+  var psh = ss.getSheetByName(SHEET_PROGRAMS);
+  if (psh) {
+    var pvals = psh.getDataRange().getValues();
+    if (pvals.length >= 2) {
+      var pHeaders = pvals[0];
+      var programs = [];
+      for (var i = 1; i < pvals.length; i++) {
+        var obj = {};
+        for (var j = 0; j < pHeaders.length; j++) obj[String(pHeaders[j])] = pvals[i][j];
+        programs.push(obj);
+      }
+      _mirrorToMongo("programs_snapshot", programs);
+      totals.programs = programs.length;
+    }
+  }
+
+  Logger.log("Snapshot complete: " + JSON.stringify(totals));
+  return totals;
+}
+
 // ── Trainer overview: every client + summary stats ────────────────────────
 function _buildTrainerOverview(ss) {
   var csh = ss.getSheetByName(SHEET_CLIENTS);
@@ -308,19 +405,23 @@ function _buildTrainerOverview(ss) {
     var lvals = lsh.getDataRange().getValues();
     if (lvals.length >= 2) {
       var lHeaders = lvals[0];
-      var lEmail   = _col(lHeaders, "ClientEmail", "Email");
-      var lDate    = _col(lHeaders, "Date");
-      var lExer    = _col(lHeaders, "Exercise");
-      var lReps    = _col(lHeaders, "Reps");
-      var lWeight  = _col(lHeaders, "Weight");
+      var lEmail    = _col(lHeaders, "ClientEmail", "Email");
+      var lDate     = _col(lHeaders, "Date");
+      var lExer     = _col(lHeaders, "Exercise");
+      var lReps     = _col(lHeaders, "Reps");
+      var lWeight   = _col(lHeaders, "Weight");
+      var lType     = _col(lHeaders, "Type", "Modality");
+      var lDistance = _col(lHeaders, "Distance");
       for (var r = 1; r < lvals.length; r++) {
         var em = String(lvals[r][lEmail] || "").toLowerCase().trim();
         if (!em) continue;
         (logsByEmail[em] = logsByEmail[em] || []).push({
-          Date: lvals[r][lDate],
+          Date:     lvals[r][lDate],
           Exercise: lvals[r][lExer],
-          Reps: lvals[r][lReps],
-          Weight: lvals[r][lWeight]
+          Reps:     lvals[r][lReps],
+          Weight:   lvals[r][lWeight],
+          Type:     lType     === -1 ? "" : lvals[r][lType],
+          Distance: lDistance === -1 ? "" : lvals[r][lDistance]
         });
       }
     }
@@ -340,6 +441,8 @@ function _buildTrainerOverview(ss) {
     var totalVol = 0;
     var prByEx = {};
     var lastDate = null;
+    var cardioMilesThisWeek = 0;
+    var totalCardioMiles = 0;
 
     logs.forEach(function (l) {
       var d = _toDateOnly(l.Date);
@@ -353,6 +456,12 @@ function _buildTrainerOverview(ss) {
       var ex = String(l.Exercise || "");
       if (ex && w > 0 && (!prByEx[ex] || w > prByEx[ex].weight)) {
         prByEx[ex] = { weight: w, reps: reps };
+      }
+      // Cardio aggregation
+      var dist = parseFloat(String(l.Distance).replace(/[^\d.]/g, "")) || 0;
+      if (dist > 0) {
+        totalCardioMiles += dist;
+        if (dObj >= weekStart) cardioMilesThisWeek += dist;
       }
     });
 
@@ -378,6 +487,8 @@ function _buildTrainerOverview(ss) {
       totalSessions: Object.keys(sessionDates).length,
       sessionsThisWeek: Object.keys(thisWeekDays).length,
       totalVolume: Math.round(totalVol),
+      cardioMilesThisWeek: Math.round(cardioMilesThisWeek * 10) / 10,
+      totalCardioMiles: Math.round(totalCardioMiles * 10) / 10,
       lastSessionDate: lastDate ? lastDate.toISOString().slice(0,10) : null,
       daysSinceLast: daysSince,
       topPRs: prList

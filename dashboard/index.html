@@ -41,7 +41,7 @@
 
 <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
-    const SHARED_TOKEN    = "PumpNationNationLONZ";
+    const SHARED_TOKEN    = "pn-7xK9mR2vQ4wL8jT";
 </script>
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
@@ -135,6 +135,22 @@
             <p class="text-[10px] text-gray-500 mt-1">across all clients</p>
         </div>
     </div>
+    <div class="container mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                <i class="fa-solid fa-person-running text-blue-500 mr-1"></i> Miles This Week
+            </p>
+            <p id="kpi-miles-week" class="text-3xl font-black text-blue-400">—</p>
+            <p class="text-[10px] text-gray-500 mt-1">all clients combined</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
+                <i class="fa-solid fa-road text-blue-500 mr-1"></i> Total Miles
+            </p>
+            <p id="kpi-miles-total" class="text-3xl font-black text-blue-400">—</p>
+            <p class="text-[10px] text-gray-500 mt-1">all-time, all clients</p>
+        </div>
+    </div>
 </section>
 
 
@@ -218,6 +234,11 @@ function renderKPIs() {
     document.getElementById("kpi-weeksessions").textContent = wk;
     const vol = c.reduce((s, x) => s + (x.totalVolume || 0), 0);
     document.getElementById("kpi-volume").textContent = vol.toLocaleString("en-US");
+
+    const milesWk = c.reduce((s, x) => s + (x.cardioMilesThisWeek || 0), 0);
+    document.getElementById("kpi-miles-week").textContent = (Math.round(milesWk * 10) / 10).toFixed(1);
+    const milesTot = c.reduce((s, x) => s + (x.totalCardioMiles || 0), 0);
+    document.getElementById("kpi-miles-total").textContent = (Math.round(milesTot * 10) / 10).toFixed(1);
 }
 
 // Mask "alice.smith@example.com" → "a******h@e****.com"
@@ -280,6 +301,15 @@ function renderClients() {
                 <div><p class="text-[10px] uppercase text-gray-500">This Week</p><p class="text-xl font-black text-white">${c.sessionsThisWeek || 0}</p></div>
                 <div><p class="text-[10px] uppercase text-gray-500">Volume</p><p class="text-xl font-black text-white">${(c.totalVolume||0).toLocaleString("en-US")}</p></div>
             </div>
+
+            ${(c.cardioMilesThisWeek > 0 || c.totalCardioMiles > 0) ? `
+            <p class="text-xs text-gray-500 mb-1">
+                <i class="fa-solid fa-person-running text-blue-500 mr-1"></i>
+                <span class="text-blue-400 font-semibold">${(Math.round((c.cardioMilesThisWeek||0)*10)/10).toFixed(1)} mi</span>
+                this week
+                <span class="text-gray-600">·</span>
+                ${(Math.round((c.totalCardioMiles||0)*10)/10).toFixed(1)} total
+            </p>` : ""}
 
             <p class="text-xs text-gray-500 mb-1">Last: <span class="${idle ? 'text-pump-red' : 'text-gray-300'}">${idleLabel}</span></p>
             ${c.topPRs && c.topPRs.length ? `<p class="text-xs text-gray-500 mb-3">Top PR: <span class="text-gray-300">${escapeHtml(c.topPRs[0].exercise)} ${c.topPRs[0].weight}</span></p>` : ''}

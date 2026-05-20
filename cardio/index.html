@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Pump Nation | Cardio</title>
+
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#D00000">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: {
+            'pump-red': '#D00000', 'pump-dark': '#121212', 'pump-card': '#1E1E1E'
+        }}}}
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; display: none; }</style>
+</head>
+<body class="bg-pump-dark text-gray-200">
+
+<script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2gAmq6RlU3G1UB5nQ7-uAlKRnW7fNAF4xXGZDWNRc-h4Lik9RLG4FYoiVXyM0IHUq7A/exec";
+    const SHARED_TOKEN    = "PumpNationNationLONZ";
+</script>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+    let CURRENT_USER = null;
+    const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.protocol === "file:";
+
+    if (IS_LOCAL) {
+        document.body.style.display = "block";
+        CURRENT_USER = { email: "edalopez90@gmail.com", user_metadata: { full_name: "Edgar Lopez" } };
+        document.addEventListener("DOMContentLoaded", () => bootApp(CURRENT_USER));
+    } else if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", user => {
+            if (!user) { window.location.replace("/login.html"); return; }
+            CURRENT_USER = user; document.body.style.display = "block"; bootApp(user);
+        });
+        window.netlifyIdentity.on("logout", () => window.location.replace("/login.html"));
+    }
+</script>
+
+
+<nav class="fixed w-full z-50 bg-pump-dark/95 backdrop-blur border-b border-zinc-800 py-4">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+        <a href="/"><img src="/logo.png" class="h-10" alt="Pump Nation"></a>
+        <div class="hidden md:flex gap-8 text-sm font-semibold text-gray-300 items-center">
+            <a href="/" class="hover:text-pump-red transition">HOME</a>
+            <a href="/workouts/" class="hover:text-pump-red transition">WORKOUTS</a>
+            <a href="/workouts/progress.html" class="hover:text-pump-red transition">PROGRESS</a>
+            <a href="/cardio/" class="text-pump-red">CARDIO</a>
+            <a href="/dashboard/" id="nav-dashboard-desktop" class="hidden hover:text-pump-red transition text-yellow-400">
+                <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+            </a>
+            <button onclick="netlifyIdentity.logout()" class="text-xs text-gray-500 hover:text-pump-red">LOG OUT</button>
+        </div>
+        <div class="md:hidden relative">
+            <button id="mobileMenuBtn" class="text-2xl text-gray-300"><i class="fa-solid fa-bars"></i></button>
+            <div id="mobileMenu" class="hidden absolute right-0 mt-4 w-48 bg-pump-card border border-zinc-800 rounded-lg shadow-xl text-sm font-semibold text-gray-300 z-50">
+                <a href="/" class="block px-4 py-3 hover:text-pump-red">HOME</a>
+                <a href="/workouts/" class="block px-4 py-3 hover:text-pump-red">WORKOUTS</a>
+                <a href="/workouts/progress.html" class="block px-4 py-3 hover:text-pump-red">PROGRESS</a>
+                <a href="/cardio/" class="block px-4 py-3 text-pump-red">CARDIO</a>
+                <a href="/dashboard/" id="nav-dashboard-mobile" class="hidden px-4 py-3 hover:text-pump-red transition text-yellow-400">
+                    <i class="fa-solid fa-user-tie mr-1"></i>DASHBOARD
+                </a>
+                <div class="border-t border-zinc-800"></div>
+                <button onclick="netlifyIdentity.logout()" class="block w-full text-left px-4 py-3 hover:text-pump-red">LOG OUT</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+<header class="pt-32 pb-6 px-4">
+    <div class="container mx-auto max-w-5xl">
+        <h1 class="text-4xl md:text-5xl font-black uppercase italic text-white mb-1">
+            <i class="fa-solid fa-person-running text-blue-500 mr-2"></i>Cardio
+        </h1>
+        <p id="welcome-line" class="text-gray-400 text-sm">Loading your cardio history…</p>
+    </div>
+</header>
+
+
+<section class="px-4 mb-8">
+    <div class="container mx-auto max-w-5xl grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Total Miles</p>
+            <p id="kpi-miles" class="text-3xl font-black text-blue-400">—</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">This Week</p>
+            <p id="kpi-week" class="text-3xl font-black text-blue-400">—</p>
+            <p class="text-[10px] text-gray-500 mt-1">miles</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Sessions</p>
+            <p id="kpi-sessions" class="text-3xl font-black text-white">—</p>
+        </div>
+        <div class="bg-pump-card border border-zinc-800 rounded-xl p-4">
+            <p class="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Calories Burned</p>
+            <p id="kpi-cal" class="text-3xl font-black text-white">—</p>
+        </div>
+    </div>
+</section>
+
+
+<!-- Weekly mileage -->
+<section class="px-4 mb-8">
+    <div class="container mx-auto max-w-5xl bg-pump-card border border-zinc-800 rounded-xl p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-white mb-3">
+            <i class="fa-solid fa-chart-column text-blue-500 mr-2"></i> Weekly mileage · last 12 weeks
+        </h2>
+        <svg id="weekly-chart" viewBox="0 0 600 220" class="w-full h-48"></svg>
+    </div>
+</section>
+
+
+<!-- Cardio PRs -->
+<section class="px-4 mb-8">
+    <div class="container mx-auto max-w-5xl bg-pump-card border border-zinc-800 rounded-xl p-5">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-white mb-3">
+            <i class="fa-solid fa-trophy text-yellow-500 mr-2"></i> Personal records · by activity
+        </h2>
+        <div id="pr-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm"></div>
+    </div>
+</section>
+
+
+<!-- Pace over time -->
+<section class="px-4 mb-8">
+    <div class="container mx-auto max-w-5xl bg-pump-card border border-zinc-800 rounded-xl p-5">
+        <div class="flex flex-wrap items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">
+                <i class="fa-solid fa-stopwatch text-blue-500 mr-2"></i> Pace over time
+            </h2>
+            <select id="pace-type" class="bg-pump-dark border border-zinc-700 rounded text-xs text-gray-300 px-2 py-1"></select>
+        </div>
+        <svg id="pace-chart" viewBox="0 0 600 220" class="w-full h-48"></svg>
+    </div>
+</section>
+
+
+<!-- Recent sessions -->
+<section class="px-4 mb-12">
+    <div class="container mx-auto max-w-5xl">
+        <h2 class="text-2xl font-black uppercase italic text-white mb-4">Recent cardio sessions</h2>
+        <div id="session-list" class="space-y-2"></div>
+    </div>
+</section>
+
+
+<div id="loading-state" class="text-center text-gray-500 py-20 px-4">
+    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pump-red mb-4"></i>
+    <p>Loading cardio history…</p>
+</div>
+
+<div id="empty-state" class="hidden text-center text-gray-500 py-20 px-4 text-sm italic max-w-xl mx-auto">
+    No cardio sessions logged yet. Add a row with <code class="text-blue-400">Type = cardio</code> to your Programs tab — runs, bikes, rows, etc. — then log a session from <a href="/workouts/" class="text-pump-red underline">/workouts/</a>.
+</div>
+
+<div id="error-state" class="hidden container mx-auto max-w-2xl bg-pump-card border border-red-900 rounded-xl p-6 text-center mb-12 mx-4">
+    <i class="fa-solid fa-triangle-exclamation text-2xl text-pump-red mb-3"></i>
+    <h3 class="text-xl font-bold text-white mb-2">Couldn't load cardio data</h3>
+    <p id="error-msg" class="text-gray-400 text-sm"></p>
+</div>
+
+
+<script>
+let HISTORY = [];
+
+async function bootApp(user) {
+    document.getElementById("welcome-line").textContent =
+        "Hey" + (user.user_metadata && user.user_metadata.full_name ? ", " + user.user_metadata.full_name.split(" ")[0] : "") + " — let's see those miles.";
+    try {
+        const url = APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((user.email||"").toLowerCase());
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        HISTORY = data.history || [];
+        document.getElementById("loading-state").classList.add("hidden");
+
+        const cardio = HISTORY.map(r => ({
+            date: parseDateISO(r.Date) || parseDateISO(r.Timestamp),
+            exercise: String(r.Exercise || "").trim(),
+            type: String(r.Type || "").trim().toLowerCase() || "run",
+            distance: parseFloat(String(r.Distance || "").replace(/[^\d.]/g, "")) || 0,
+            durationSec: parseDurationToSecs(r.Duration),
+            calories: parseFloat(r.Calories) || 0
+        })).filter(r => r.date && (r.distance > 0 || r.durationSec > 0));
+
+        if (!cardio.length) {
+            document.getElementById("empty-state").classList.remove("hidden");
+            return;
+        }
+        renderAll(cardio);
+    } catch (err) {
+        showError(err.message || String(err));
+    }
+}
+
+
+function renderAll(cardio) {
+    // KPIs
+    const totalMiles = cardio.reduce((s, r) => s + r.distance, 0);
+    document.getElementById("kpi-miles").textContent = (Math.round(totalMiles * 10) / 10).toFixed(1);
+
+    const weekStart = startOfWeek(new Date());
+    const thisWeek = cardio.filter(r => new Date(r.date) >= weekStart).reduce((s, r) => s + r.distance, 0);
+    document.getElementById("kpi-week").textContent = (Math.round(thisWeek * 10) / 10).toFixed(1);
+
+    document.getElementById("kpi-sessions").textContent = cardio.length;
+
+    const totalCal = cardio.reduce((s, r) => s + (r.calories || 0), 0);
+    document.getElementById("kpi-cal").textContent = totalCal.toLocaleString("en-US");
+
+    // Weekly mileage chart
+    renderWeekly(cardio);
+
+    // PR grid: longest distance per type + fastest pace per type
+    renderPRs(cardio);
+
+    // Pace over time
+    setupPaceChart(cardio);
+
+    // Recent session list
+    renderSessions(cardio);
+}
+
+
+function renderWeekly(cardio) {
+    const buckets = {};
+    cardio.forEach(r => {
+        const wk = startOfWeek(new Date(r.date)).toISOString().slice(0,10);
+        buckets[wk] = (buckets[wk] || 0) + r.distance;
+    });
+    const weeks = [];
+    const cur = startOfWeek(new Date());
+    for (let i = 11; i >= 0; i--) {
+        const d = new Date(cur); d.setDate(d.getDate() - i*7);
+        weeks.push({ key: d.toISOString().slice(0,10), label: shortDate(d), miles: buckets[d.toISOString().slice(0,10)] || 0 });
+    }
+    const max = Math.max(1, ...weeks.map(w => w.miles));
+
+    const W = 600, H = 220, pad = 30;
+    const barW = (W - pad*2) / weeks.length;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.getElementById("weekly-chart");
+    svg.innerHTML = "";
+
+    weeks.forEach((wk, i) => {
+        const barH = (wk.miles / max) * (H - pad*2);
+        const x = pad + i * barW;
+        const y = H - pad - barH;
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", x + 3); rect.setAttribute("y", y);
+        rect.setAttribute("width", Math.max(2, barW - 6));
+        rect.setAttribute("height", barH);
+        rect.setAttribute("fill", wk.miles > 0 ? "#3b82f6" : "#2a2a2a");
+        rect.setAttribute("rx", "2");
+        svg.appendChild(rect);
+        if (i % 2 === 0) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", x + barW/2); t.setAttribute("y", H - 10);
+            t.setAttribute("fill", "#666"); t.setAttribute("font-size", "9");
+            t.setAttribute("text-anchor", "middle"); t.textContent = wk.label;
+            svg.appendChild(t);
+        }
+        if (wk.miles > 0) {
+            const t = document.createElementNS(ns, "text");
+            t.setAttribute("x", x + barW/2); t.setAttribute("y", y - 4);
+            t.setAttribute("fill", "#bbb"); t.setAttribute("font-size", "9");
+            t.setAttribute("text-anchor", "middle");
+            t.textContent = (Math.round(wk.miles*10)/10).toFixed(1);
+            svg.appendChild(t);
+        }
+    });
+}
+
+
+function renderPRs(cardio) {
+    const byType = {};
+    cardio.forEach(r => {
+        const t = r.type || "run";
+        const bucket = byType[t] = byType[t] || { longest: 0, longestDate: "", fastestPace: Infinity, fastestDate: "" };
+        if (r.distance > bucket.longest) { bucket.longest = r.distance; bucket.longestDate = r.date; }
+        if (r.distance > 0 && r.durationSec > 0) {
+            const p = r.durationSec / r.distance;
+            if (p < bucket.fastestPace) { bucket.fastestPace = p; bucket.fastestDate = r.date; }
+        }
+    });
+    const grid = document.getElementById("pr-grid");
+    grid.innerHTML = Object.keys(byType).sort().map(t => {
+        const b = byType[t];
+        const pace = isFinite(b.fastestPace) ? formatPace(b.fastestPace) : "—";
+        return `
+            <div class="border border-zinc-800 rounded-lg p-3">
+                <p class="text-xs uppercase font-bold text-blue-400 mb-2"><i class="fa-solid fa-bolt mr-1"></i>${escapeHtml(t)}</p>
+                <p class="text-sm text-gray-300">Longest: <span class="text-white font-bold">${b.longest.toFixed(2)} mi</span> <span class="text-gray-500 text-xs">${b.longestDate || ""}</span></p>
+                <p class="text-sm text-gray-300">Fastest pace: <span class="text-white font-bold">${pace}</span> <span class="text-gray-500 text-xs">${b.fastestDate || ""}</span></p>
+            </div>
+        `;
+    }).join("");
+}
+
+function formatPace(secsPerMi) {
+    const m = Math.floor(secsPerMi / 60), s = Math.round(secsPerMi % 60);
+    return `${m}:${String(s).padStart(2,"0")}/mi`;
+}
+
+
+function setupPaceChart(cardio) {
+    const types = [...new Set(cardio.map(r => r.type || "run"))].sort();
+    const sel = document.getElementById("pace-type");
+    sel.innerHTML = types.map(t => `<option value="${escapeAttr(t)}">${escapeHtml(t)}</option>`).join("");
+    const draw = () => drawPaceChart(sel.value, cardio);
+    sel.onchange = draw;
+    draw();
+}
+
+function drawPaceChart(type, cardio) {
+    const svg = document.getElementById("pace-chart");
+    svg.innerHTML = "";
+    const ns = "http://www.w3.org/2000/svg";
+    const W = 600, H = 220, pad = 30;
+
+    const rows = cardio.filter(r => (r.type || "run") === type && r.distance > 0 && r.durationSec > 0);
+    const points = rows.map(r => ({ d: new Date(r.date), p: r.durationSec / r.distance })).sort((a,b) => a.d - b.d);
+    if (points.length < 2) return;
+
+    const xs = points.map(p => p.d.getTime()), ys = points.map(p => p.p);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const yPad = (yMax - yMin) * 0.1 || 1;
+    const yLo = yMin - yPad, yHi = yMax + yPad;
+
+    const px = t => pad + ((t - xMin) / (xMax - xMin || 1)) * (W - pad*2);
+    const py = v => H - pad - ((v - yLo) / (yHi - yLo)) * (H - pad*2);
+
+    const d = "M " + points.map(p => `${px(p.d.getTime())},${py(p.p)}`).join(" L ");
+    const line = document.createElementNS(ns, "path");
+    line.setAttribute("d", d); line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "#3b82f6"); line.setAttribute("stroke-width", "2");
+    svg.appendChild(line);
+
+    points.forEach(p => {
+        const c = document.createElementNS(ns, "circle");
+        c.setAttribute("cx", px(p.d.getTime())); c.setAttribute("cy", py(p.p));
+        c.setAttribute("r", "3"); c.setAttribute("fill", "#fff");
+        c.setAttribute("stroke", "#3b82f6"); c.setAttribute("stroke-width", "1.5");
+        svg.appendChild(c);
+    });
+}
+
+
+function renderSessions(cardio) {
+    const sorted = cardio.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 30);
+    document.getElementById("session-list").innerHTML = sorted.map(r => `
+        <div class="bg-pump-card border border-zinc-800 rounded-lg p-3 flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+                <span class="text-xs text-gray-500">${r.date}</span>
+                <span class="text-sm font-bold text-white ml-2">${escapeHtml(r.exercise || r.type)}</span>
+                <span class="text-xs text-blue-400 ml-2 uppercase">${escapeHtml(r.type)}</span>
+            </div>
+            <div class="text-sm text-gray-300">
+                <span class="font-bold text-white">${r.distance ? r.distance.toFixed(2) + " mi" : ""}</span>
+                ${r.durationSec ? ` · ${secsToHMS(r.durationSec)}` : ""}
+                ${r.distance && r.durationSec ? ` · <span class="text-blue-400">${formatPace(r.durationSec / r.distance)}</span>` : ""}
+                ${r.calories ? ` · ${r.calories} cal` : ""}
+            </div>
+        </div>
+    `).join("");
+}
+
+
+function parseDateISO(v) {
+    if (!v) return null;
+    if (v instanceof Date) return v.toISOString().slice(0,10);
+    const s = String(v);
+    if (s.includes("T")) return s.slice(0,10);
+    const d = new Date(s);
+    return isNaN(d) ? null : d.toISOString().slice(0,10);
+}
+function startOfWeek(d) {
+    const x = new Date(d); const day = x.getDay() || 7;
+    if (day !== 1) x.setHours(-24 * (day - 1));
+    x.setHours(0, 0, 0, 0); return x;
+}
+function parseDurationToSecs(s) {
+    if (!s) return 0;
+    const parts = String(s).trim().split(":").map(p => parseInt(p, 10) || 0);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return parseInt(String(s), 10) || 0;
+}
+function secsToHMS(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.round(s % 60);
+    if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+    return `${m}:${String(sec).padStart(2,"0")}`;
+}
+function shortDate(d) { return (d.getMonth()+1) + "/" + d.getDate(); }
+function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s) { return escapeHtml(s); }
+function showError(msg) {
+    document.getElementById("loading-state").classList.add("hidden");
+    const box = document.getElementById("error-state");
+    box.classList.remove("hidden");
+    document.getElementById("error-msg").textContent = msg;
+}
+
+// Trainer-only nav link
+const TRAINER_EMAILS_UI = ["edalopez90@gmail.com"];
+(function () {
+    let tries = 0;
+    const poll = setInterval(() => {
+        if (CURRENT_USER || ++tries > 40) {
+            clearInterval(poll);
+            const email = (CURRENT_USER && CURRENT_USER.email || "").toLowerCase();
+            if (TRAINER_EMAILS_UI.includes(email)) {
+                ["nav-dashboard-desktop","nav-dashboard-mobile"].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.classList.remove("hidden");
+                });
+            }
+        }
+    }, 100);
+})();
+
+// Hamburger
+(function () {
+    const btn = document.getElementById("mobileMenuBtn"), menu = document.getElementById("mobileMenu");
+    if (!btn || !menu) return;
+    btn.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("hidden"); });
+    menu.querySelectorAll("a, button").forEach(el => el.addEventListener("click", () => menu.classList.add("hidden")));
+    document.addEventListener("click", e => { if (!menu.contains(e.target) && e.target !== btn) menu.classList.add("hidden"); });
+})();
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+</script>
+
+</body>
+</html>

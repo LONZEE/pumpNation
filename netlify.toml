@@ -1,0 +1,3 @@
+[build]
+  functions = "netlify/functions"
+  # Netlify auto-detects the static site root; no other build config needed.
