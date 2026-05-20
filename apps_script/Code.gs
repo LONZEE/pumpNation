@@ -23,31 +23,6 @@
 // ---- CONFIG --------------------------------------------------------------
 var SHARED_SECRET = "pn-7xK9mR2vQ4wL8jT"; // must match the token in index.html
 var SHEET_CLIENTS  = "Clients";
-var SHEET_PROGRAMS = "Programs";/**
- * Pump Nation — Workout Tracker backend
- * Google Apps Script Web App that connects the workouts page
- * to the PumpNation_Workouts Google Sheet.
- *
- * Endpoints:
- *   GET  ?email=<clientEmail>&token=<SECRET>
- *        → { client: {...}, program: [ {Day, Focus, Exercise, ...} ] }
- *
- *   POST  (JSON body: { token, email, name, date, programName, day, entries: [...] })
- *        → { ok: true, written: N }
- *
- * Deploy:
- *   1. Open the Google Sheet → Extensions → Apps Script
- *   2. Paste this file as Code.gs
- *   3. Set SHARED_SECRET below (any random string — must match index.html)
- *   4. Deploy → New deployment → Type: Web app
- *      - Execute as: Me
- *      - Who has access: Anyone
- *   5. Copy the /exec URL into workouts/index.html (APPS_SCRIPT_URL)
- */
-
-// ---- CONFIG --------------------------------------------------------------
-var SHARED_SECRET = "pn-7xK9mR2vQ4wL8jT"; // must match the token in index.html
-var SHEET_CLIENTS  = "Clients";
 var SHEET_PROGRAMS = "Programs";
 var SHEET_LOGS     = "Logs";
 
