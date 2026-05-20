@@ -1,3 +1,6 @@
 [build]
   functions = "netlify/functions"
   # Netlify auto-detects the static site root; no other build config needed.
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
