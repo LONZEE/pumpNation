@@ -1,6 +1,6 @@
 /* Pump Nation service worker — basic offline shell + bypass API calls */
 
-const VERSION = "v9";  // bump when you change cached files to force a refresh
+const VERSION = "v10";  // bump when you change cached files to force a refresh
 const SHELL_CACHE = `pump-shell-${VERSION}`;
 
 // Files we always want available offline (the "app shell").
@@ -60,8 +60,10 @@ self.addEventListener("fetch", (event) => {
         event.respondWith(
             fetch(req)
                 .then((res) => {
-                    const copy = res.clone();
-                    caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
+                    if (res.status === 200) {
+                        const copy = res.clone();
+                        caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
+                    }
                     return res;
                 })
                 .catch(() => caches.match(req).then((r) => r || caches.match("/workouts/")))
@@ -75,7 +77,7 @@ self.addEventListener("fetch", (event) => {
             caches.match(req).then((cached) => {
                 if (cached) return cached;
                 return fetch(req).then((res) => {
-                    if (res.ok) {
+                    if (res.status === 200) {
                         const copy = res.clone();
                         caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
                     }
