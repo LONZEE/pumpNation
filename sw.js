@@ -58,7 +58,9 @@ self.addEventListener("fetch", (event) => {
     //    fall back to cached shell when offline.
     if (req.mode === "navigate" || (req.headers.get("accept") || "").includes("text/html")) {
         event.respondWith(
-            fetch(req)
+            // cache:'reload' bypasses the HTTP cache so we always get a fresh 200
+            // (prevents serving stale HTML when only a 304 comes back from the CDN)
+            fetch(new Request(req.url, { cache: "reload" }))
                 .then((res) => {
                     if (res.status === 200) {
                         const copy = res.clone();
