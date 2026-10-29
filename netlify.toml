@@ -1,6 +1,26 @@
 [build]
+  command   = "cd admin && npm install && npm run build"
   functions = "netlify/functions"
+  publish   = "."
   # Netlify auto-detects the static site root; no other build config needed.
 
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
+
+# Serve the compiled React admin app under /admin/*
+# Assets must pass through to their real files first — otherwise the
+# catch-all below rewrites JS/CSS requests to index.html and the app won't load.
+[[redirects]]
+  from   = "/admin/assets/*"
+  to     = "/_admin/assets/:splat"
+  status = 200
+
+[[redirects]]
+  from   = "/admin"
+  to     = "/_admin/index.html"
+  status = 200
+
+[[redirects]]
+  from   = "/admin/*"
+  to     = "/_admin/index.html"
+  status = 200

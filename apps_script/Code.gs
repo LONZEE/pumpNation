@@ -33,8 +33,8 @@ var TRAINER_EMAILS = ["edalopez90@gmail.com"];
 // Paste your Netlify Function URL here once the site is deployed, e.g.
 //   "https://yoursite.netlify.app/.netlify/functions/mirror"
 // Leave blank ("") to disable mirroring entirely — sheet writes still work.
-var MIRROR_ENDPOINT = "https://www.pumpnationbtx.com/.netlify/functions/mirror";
-var MIRROR_SECRET   = "mirror-pump-2026-q3-abc";  // must match MIRROR_SECRET in Netlify env vars
+var MIRROR_ENDPOINT = "";  // push disabled — Netlify sync.js pulls instead (no UrlFetchApp needed)
+var MIRROR_SECRET   = "mirror-pump-2026-q3-abc";
 // --------------------------------------------------------------------------
 
 
@@ -61,6 +61,71 @@ function doGet(e) {
         clientsTabFound: !!sh,
         clientEmails: clientEmails
       });
+    }
+
+    // ── Netlify pull sync: full snapshot (clients + programs) ─────────────
+    if (params.action === "snapshot") {
+      var snapClients = [];
+      var snapPrograms = [];
+      var cShSnap = ss.getSheetByName(SHEET_CLIENTS);
+      if (cShSnap) {
+        var cValsSnap = cShSnap.getDataRange().getValues();
+        if (cValsSnap.length >= 2) {
+          var cHdrsSnap = cValsSnap[0];
+          for (var si = 1; si < cValsSnap.length; si++) {
+            var co = {};
+            for (var sj = 0; sj < cHdrsSnap.length; sj++) {
+              var sv = cValsSnap[si][sj];
+              co[String(cHdrsSnap[sj])] = (sv instanceof Date) ? sv.toISOString() : sv;
+            }
+            if (co.Email || co.email) snapClients.push(co);
+          }
+        }
+      }
+      var pShSnap = ss.getSheetByName(SHEET_PROGRAMS);
+      if (pShSnap) {
+        var pValsSnap = pShSnap.getDataRange().getValues();
+        if (pValsSnap.length >= 2) {
+          var pHdrsSnap = pValsSnap[0];
+          for (var pi = 1; pi < pValsSnap.length; pi++) {
+            var po = {};
+            for (var pj = 0; pj < pHdrsSnap.length; pj++) {
+              var pv = pValsSnap[pi][pj];
+              po[String(pHdrsSnap[pj])] = (pv instanceof Date) ? pv.toISOString() : pv;
+            }
+            snapPrograms.push(po);
+          }
+        }
+      }
+      return _json({ clients: snapClients, programs: snapPrograms });
+    }
+
+    // ── Netlify pull sync: incremental logs export ────────────────────────
+    if (params.action === "logs_export") {
+      var sinceMs = params.since ? new Date(params.since).getTime() : 0;
+      var exportedLogs = [];
+      var lShExp = ss.getSheetByName(SHEET_LOGS);
+      if (lShExp) {
+        var lValsExp = lShExp.getDataRange().getValues();
+        if (lValsExp.length >= 2) {
+          var lHdrsExp = lValsExp[0];
+          var lTsIdxExp = _col(lHdrsExp, "Timestamp", "Time");
+          for (var li = 1; li < lValsExp.length; li++) {
+            if (sinceMs > 0 && lTsIdxExp !== -1) {
+              var tsRaw = lValsExp[li][lTsIdxExp];
+              var tsMs = (tsRaw instanceof Date) ? tsRaw.getTime() : (tsRaw ? new Date(String(tsRaw)).getTime() : 0);
+              if (tsMs > 0 && tsMs <= sinceMs) continue;
+            }
+            var lo = {};
+            for (var lj = 0; lj < lHdrsExp.length; lj++) {
+              var lv = lValsExp[li][lj];
+              lo[String(lHdrsExp[lj])] = (lv instanceof Date) ? lv.toISOString() : lv;
+            }
+            exportedLogs.push(lo);
+          }
+        }
+      }
+      return _json({ logs: exportedLogs, count: exportedLogs.length });
     }
 
     var email = (params.email || "").toString().trim().toLowerCase();

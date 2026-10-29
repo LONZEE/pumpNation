@@ -634,6 +634,20 @@ async function onSave(e) {
         if (data.error) throw new Error(data.error);
         clearDraft();
         showToast(`Saved ${data.written} sets`);
+        // Mirror to MongoDB in real-time (fire-and-forget — never blocks the save)
+        fetch("/.netlify/functions/log", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                token: SHARED_TOKEN,
+                email: (CURRENT_USER.email || "").toLowerCase(),
+                name:  (CURRENT_USER.user_metadata && CURRENT_USER.user_metadata.full_name) || CLIENT.Name || "",
+                date: date,
+                programName: CLIENT.AssignedProgram || "",
+                day: ACTIVE_DAY,
+                entries: entries
+            })
+        }).catch(() => {}); // silent fail — sheet write already succeeded
         // refresh history from server
         const refreshed = await fetch(APPS_SCRIPT_URL + "?token=" + encodeURIComponent(SHARED_TOKEN) + "&email=" + encodeURIComponent((CURRENT_USER.email||"").toLowerCase()));
         const refData = await refreshed.json();
